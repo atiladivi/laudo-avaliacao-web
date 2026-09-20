@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Protótipo Web – Laudo de Avaliação</title>
+<style>
+:root{--azul:#1f4e78;--azul2:#d9eaf7;--borda:#c9d2dc;--bg:#f4f6f8;--erro:#fff0f0;--ok:#eef8ee}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#1f2933}
+header{background:var(--azul);color:#fff;padding:18px 28px} header h1{font-size:20px;margin:0}
+nav{display:flex;gap:8px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--borda);position:sticky;top:0;z-index:5}
+button{border:1px solid var(--azul);background:#fff;color:var(--azul);padding:8px 12px;border-radius:5px;cursor:pointer;font-weight:600}
+button.primary,.tab.active{background:var(--azul);color:#fff}.tab.locked{opacity:.45;cursor:not-allowed;background:#eef1f4;color:#66737f}
+.tab.status-empty:not(.active){background:#f4f5f6;color:#52606b}
+.tab.status-progress:not(.active){background:#fff2cc;color:#6b5300;border-color:#e2c45c}
+.tab.status-complete:not(.active){background:#dff2e1;color:#1f6328;border-color:#91c799}
+.tab.status-error:not(.active){background:#f9dddd;color:#8a1f1f;border-color:#dda0a0}.field-invalid{border-color:#b3261e!important;background:#fff0f0!important}.required-field{background:#fff9df!important;border-left:4px solid #d6a51f!important}.required-note{font-size:12px;color:#765c00;margin:4px 0 12px}.validation-error{color:#9b1c1c;font-weight:700}
+.emissionbar{margin:14px 0 0;padding:14px;background:#fff;border:1px solid var(--borda);border-radius:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.emissionbar strong{margin-right:auto}.emissionbar .state{font-weight:700}.emissionbar.ready{border-left:5px solid #3d8b45}.emissionbar.pending{border-left:5px solid #d4a72c}.wrap{padding:22px;max-width:1600px;margin:auto}
+.card{background:#fff;border:1px solid var(--borda);border-radius:8px;padding:18px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 14px;color:var(--azul)} .grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px}
+label{font-size:12px;font-weight:700;display:block;margin-bottom:5px} input,select,textarea{width:100%;padding:8px;border:1px solid #aeb8c2;border-radius:4px;background:#fff}
+textarea{min-height:58px}.muted{font-size:12px;color:#66737f}.hidden{display:none}
+table{width:100%;border-collapse:collapse;font-size:12px} th{background:var(--azul);color:#fff;padding:7px;border:1px solid #fff;white-space:nowrap}
+td{padding:4px;border:1px solid #d8dee5} td input,td select{min-width:95px;padding:6px}
+.status{font-weight:700;text-align:center}.incompleta td{background:var(--erro)}.completa td{background:var(--ok)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.kpi{border:1px solid var(--borda);border-radius:6px;text-align:center;overflow:hidden}
+.kpi b{display:block;background:var(--azul2);padding:7px;font-size:12px}.kpi span{display:block;padding:10px;font-size:18px;font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.scroll{overflow:auto}
+.classbox{grid-column:1/-1;border:1px solid var(--borda);background:#f8fafc;border-radius:6px;padding:10px}
+.classrow{display:grid;grid-template-columns:140px 1fr auto;gap:8px;margin-top:7px;align-items:end}
+.badge{display:inline-block;padding:3px 7px;border-radius:12px;background:var(--azul2);font-size:11px;font-weight:700}
+.pend{font-size:10px;color:#9b1c1c;max-width:210px;line-height:1.25}.oktxt{font-size:10px;color:#246b2a;font-weight:700}
+.fieldgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.subgroup{margin:16px 0 8px;padding-top:10px;border-top:1px solid #d9e0e5}.subgroup h3{margin:0 0 10px;font-size:14px;color:#314b5f}.factorgrid{display:grid;grid-template-columns:1.5fr .7fr 1fr;gap:8px;align-items:end}.docgrid{display:grid;grid-template-columns:1.35fr .7fr 1fr 1.25fr;gap:8px;align-items:end;margin-bottom:8px}.docfile{font-size:12px}.docfile:disabled{opacity:.45;cursor:not-allowed}.docname{font-size:12px;margin-top:4px;word-break:break-word}.resultgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;align-items:end}.fieldgrid .wide{grid-column:span 2}.fieldgrid .full{grid-column:1/-1}
+textarea{min-height:76px;resize:vertical}.review{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.review .kpi span{font-size:13px}
+@media(max-width:900px){.grid,.kpis,.fieldgrid,.review{grid-template-columns:1fr 1fr}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body><div id="webPilotBanner" style="background:#eef4f8;border-bottom:1px solid #c9d7e2;padding:8px 16px;font:12px Arial,sans-serif;color:#24445d;text-align:center">
+<strong>Versão piloto web 16.2</strong> — processamento da avaliação realizado no navegador. Os arquivos selecionados não são armazenados pela aplicação.
+</div>
+<header><h1>Protótipo Web – Laudo de Avaliação</h1></header>
+<nav>
+<button class="tab active" data-tab="inicio">Início</button>
+<button class="tab" data-tab="local">Localização</button>
+<button class="tab" data-tab="carac">Caracterização</button>
+<button class="tab" data-tab="met">Metodologia</button>
+<button class="tab" data-tab="amos" id="tabAmostras">Amostras</button>
+<button class="tab" data-tab="diag">Diagnóstico</button>
+<button class="tab" data-tab="resultado">Resultado</button>
+<button class="tab" data-tab="obs">Observações</button>
+<button class="tab" data-tab="docs">Anexos / Encerramento</button>
+<button class="tab" data-tab="anexo">Prévia do Anexo I</button>
+</nav>
+<div class="wrap">
+
+<p class="required-note">Campos com destaque amarelo são obrigatórios para concluir a etapa e liberar o status verde.</p><div id="emissionBar" class="emissionbar pending">
+<strong>Emissão</strong>
+<span id="emissionState" class="state">PENDENTE</span>
+<button id="saveFullTop">Salvar avaliação</button>
+<button id="openFullTop">Abrir avaliação</button>
+<button id="emitXlsxTop">Gerar XLSX</button>
+<button id="emitPdfTop" class="primary">Gerar Laudo PDF</button>
+<input id="fileFullTop" type="file" accept=".avaliacao,.json,application/json" class="hidden">
+</div>
+
+<section id="inicio" class="tabpane">
+<div class="card"><h2>Início</h2>
+
+<div class="subgroup"><h3>1. Identificação da Avaliação</h3>
+<div class="fieldgrid">
+<label>Nº da OS<input data-form="inicio" data-key="os"></label>
+<label>Nº do laudo<input data-form="inicio" data-key="numeroLaudo"></label>
+<div></div>
+
+<label>Data da vistoria<input type="date" data-form="inicio" data-key="dataVistoria"></label>
+<label>Data-base<input type="date" data-form="inicio" data-key="dataBase"></label>
+<div></div>
+
+<label>Objetivo<select data-form="inicio" data-key="objetivo"><option value=""></option><option>Valor de Mercado</option><option>Valor de Mercado + VLI</option><option>Locação</option></select></label>
+<label>Finalidade<select data-form="inicio" data-key="finalidade"><option value=""></option><option>Arrematação/Adjudicação</option><option>Assistência técnica judicial para recuperação de crédito</option><option>Assistência técnica judicial que trate de locação</option><option>Avaliação para terceiros</option><option>Consolidação de propriedade fiduciária</option><option>Dação em pagamento</option><option>Doação</option><option>Fins contábeis - CPC</option><option>Garantia de composição de dívidas</option><option>Garantia para operação de crédito</option><option>Levantamento patrimonial</option><option>Locação a terceiros</option><option>Locação de terceiros</option><option>MAPS</option><option>Registro contábil de imóvel não de uso</option><option>Outros</option></select></label>
+<div></div>
+
+<label>Tipo do imóvel<select data-form="inicio" data-key="tipologia"><option value=""></option><option>Apartamento</option><option>Complexo industrial</option><option>Empreendimento</option><option>Galpão</option><option>Gleba urbana</option><option>Loja</option><option>Prédio comercial</option><option>Prédio industrial</option><option>Prédio misto</option><option>Prédio residencial</option><option>Residência</option><option>Sala</option><option>Terreno comercial</option><option>Terreno industrial</option><option>Terreno residencial</option><option>Vaga / garagem</option></select></label>
+<label>Uso atual<select data-form="inicio" data-key="uso"><option value=""></option><option>Residencial</option><option>Comercial</option><option>Misto</option><option>Outro</option></select></label>
+<div></div>
+
+<label>Condição da vistoria<select data-form="inicio" data-key="condicaoVistoria"><option value=""></option><option>Integral</option><option>Situação paradigma</option><option>Outra</option></select></label>
+<label>Acesso ao interior<select data-form="inicio" data-key="acessoInterior"><option value=""></option><option>Interna e externa</option><option>Sem acesso ao interior</option><option>Parcial</option><option>Outro</option></select></label>
+<div></div>
+</div></div>
+
+<div class="subgroup"><h3>2. Identificação do Imóvel</h3>
+<div class="fieldgrid">
+<label class="wide">Proprietário<input data-form="inicio" data-key="proprietario"></label><div></div>
+<label class="wide">Endereço<input data-form="inicio" data-key="endereco"></label>
+<label>Número / complemento<input data-form="inicio" data-key="numeroComplemento"></label>
+<label class="wide">Condomínio / empreendimento<input data-form="inicio" data-key="condominio"></label><div></div>
+<label>Bairro<input data-form="inicio" data-key="bairro"></label>
+<label>Município<input data-form="inicio" data-key="municipio"></label>
+<label>UF<select data-form="inicio" data-key="uf" id="inicioUf"></select></label>
+<label>CEP<input inputmode="numeric" maxlength="9" placeholder="00000-000" data-form="inicio" data-key="cep" id="inicioCep"></label>
+<label>Matrícula<input data-form="inicio" data-key="matricula"></label>
+<label>Cartório<input data-form="inicio" data-key="cartorio"></label>
+<label>Latitude<input inputmode="decimal" placeholder="-23.550520" data-form="inicio" data-key="latitude" id="inicioLat"></label>
+<label>Longitude<input inputmode="decimal" placeholder="-46.633308" data-form="inicio" data-key="longitude" id="inicioLon"></label>
+<div></div>
+</div>
+<p id="inicioValidation" class="muted"></p>
+</div></div></section>
+
+<section id="local" class="tabpane hidden">
+<div class="card"><h2>2. Localização e Microrregião</h2>
+<div class="subgroup"><h3>Caracterização da região</h3><div class="fieldgrid">
+<label>Uso predominante<select data-form="local" data-key="usoPred"><option value=""></option><option>Residencial</option><option>Comercial</option><option>Misto</option><option>Outro</option></select></label>
+<label>Ocupação da região<select data-form="local" data-key="ocupacao"><option value=""></option><option>Consolidada</option><option>Em consolidação</option><option>Expansão</option><option>Pouco ocupada</option></select></label>
+<label>Padrão predominante<select data-form="local" data-key="padrao"><option value=""></option><option>Baixo</option><option>Médio-baixo</option><option>Médio</option><option>Médio-alto</option><option>Alto</option></select></label>
+<label>Densidade de ocupação<select data-form="local" data-key="densidade"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label class="full">Observação sobre a região<textarea data-form="local" data-key="obsRegiao"></textarea></label>
+</div></div>
+<div class="subgroup"><h3>Acessibilidade</h3><div class="fieldgrid">
+<label>Acesso viário<select data-form="local" data-key="acessoViario"><option value=""></option><option>Ruim</option><option>Regular</option><option>Bom</option><option>Muito bom</option></select></label>
+<label>Transporte público<select data-form="local" data-key="transportePublico"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Facilidade de estacionamento<select data-form="local" data-key="estacionamento"><option value=""></option><option>Ruim</option><option>Regular</option><option>Bom</option><option>Muito bom</option></select></label>
+<label>Proximidade de vias principais<select data-form="local" data-key="viasPrincipais"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></label>
+<label>Acesso a rodovias<select data-form="local" data-key="rodovias"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></label>
+<label>Transporte sobre trilhos<select data-form="local" data-key="trilhos"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></label>
+<label class="full">Outros aspectos relevantes<input data-form="local" data-key="outrosAcesso"></label>
+</div></div>
+<div class="subgroup"><h3>Infraestrutura urbana</h3><div class="fieldgrid">
+<label>Abastecimento de água<select data-form="local" data-key="agua"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Rede de esgoto<select data-form="local" data-key="esgoto"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Energia elétrica<select data-form="local" data-key="energia"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Iluminação pública<select data-form="local" data-key="iluminacao"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Pavimentação<select data-form="local" data-key="pavimentacao"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Drenagem urbana<select data-form="local" data-key="drenagem"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Telefonia/dados<select data-form="local" data-key="dados"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Gás canalizado<select data-form="local" data-key="gas"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+</div></div>
+<div class="subgroup"><h3>Equipamentos / serviços e fatores locacionais</h3>
+<div class="factorgrid"><b>Equipamento / serviço</b><b>Existe?</b><b>Impacto no imóvel</b></div>
+<div class="factorgrid"><div>Comércio/serviços</div><select data-form="local" data-key="comercioExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="comercioObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Escolas</div><select data-form="local" data-key="escolasExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="escolasObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Saúde</div><select data-form="local" data-key="saudeExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="saudeObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Parques/lazer</div><select data-form="local" data-key="lazerExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="lazerObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Shopping</div><select data-form="local" data-key="shoppingExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="shoppingObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Metrô/trem</div><select data-form="local" data-key="metroExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="metroObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Ocupação irregular</div><select data-form="local" data-key="irregularExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="irregularObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Outro</div><select data-form="local" data-key="outroExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="outroObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div>
+</div></div></section>
+
+<section id="carac" class="tabpane hidden">
+<div class="card"><h2>3. Caracterização — Apartamento</h2>
+<div class="subgroup"><h3>Unidade avaliada</h3><div class="fieldgrid">
+<label>Área constante da matrícula (m²)<input type="number" step="any" data-form="carac" data-key="areaMatricula"></label>
+<label>Área não averbada (m²)<input type="number" step="any" data-form="carac" data-key="naoAverbada"></label>
+<label>Área adotada na avaliação (m²)<input type="number" step="any" data-form="carac" data-key="areaAdotada"></label>
+<label>Dormitórios<input type="number" data-form="carac" data-key="dormitorios"></label>
+<label>Suítes<input type="number" data-form="carac" data-key="suites"></label>
+<label>Banheiros<input type="number" data-form="carac" data-key="banheiros"></label>
+<label>Vagas<input type="number" data-form="carac" data-key="vagas"></label>
+<label>Andar / pavimento<input data-form="carac" data-key="andar"></label>
+</div></div>
+<div class="subgroup"><h3>Lazer / infraestrutura condominial</h3><div class="fieldgrid">
+<label>Piscina<select data-form="carac" data-key="piscina"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Academia<select data-form="carac" data-key="academia"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Salão de festas<select data-form="carac" data-key="salaoFestas"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Churrasqueira<select data-form="carac" data-key="churrasqueira"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Playground<select data-form="carac" data-key="playground"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Quadra<select data-form="carac" data-key="quadra"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Salão de jogos<select data-form="carac" data-key="salaoJogos"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Espaço gourmet<select data-form="carac" data-key="gourmet"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label>
+<label>Outro<input data-form="carac" data-key="outroLazer"></label>
+</div></div>
+<div class="subgroup"><h3>Vistoria e documentação</h3><div class="fieldgrid">
+<label>Impedimento para regularização da área não averbada?<select data-form="carac" data-key="impRegularizacao"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Motivo do impedimento de regularização<input data-form="carac" data-key="motivoRegularizacao"></label>
+<label>Houve impedimento para acesso ao interior do imóvel?<select data-form="carac" data-key="impAcesso"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Motivo do impedimento de acesso<input data-form="carac" data-key="motivoAcesso"></label>
+<label>As informações da documentação correspondem às verificadas na vistoria?<select data-form="carac" data-key="docVistoria"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Divergências entre documentação e vistoria<input data-form="carac" data-key="divergencias"></label>
+</div></div></div></section>
+
+<section id="met" class="tabpane hidden">
+<div class="card">
+<h2>Metodologia</h2>
+
+<div class="subgroup"><h3>Modelo</h3>
+<div class="fieldgrid">
+<label class="full">Método
+<select data-form="metodados" data-key="metodo">
+<option value=""></option>
+<option>MCDDM - Método Comparativo Direto de Dados de Mercado</option>
+<option>MEVOL - Método Evolutivo</option>
+<option>MIVOL - Método Involutivo</option>
+<option>Metodologia conjugada</option>
+<option>Sem metodologia definida em norma</option>
+</select></label>
+
+<label>Total de dados<input type="number" min="0" step="1" data-form="metodados" data-key="totalDados"></label>
+<label>Dados utilizados no modelo<input type="number" min="0" step="1" data-form="metodados" data-key="dadosUtilizados"></label>
+<div></div>
+
+<label>Total de variáveis<input type="number" min="0" max="8" step="1" data-form="metodados" data-key="totalVariaveis"></label>
+<label>Variáveis utilizadas no modelo<input type="number" min="0" max="8" step="1" data-form="metodados" data-key="variaveisUtilizadas"></label>
+<div></div>
+
+<label class="full">Equação do modelo
+<textarea data-form="metodados" data-key="equacao" style="min-height:90px" placeholder="Informe a equação do modelo"></textarea></label>
+
+<label>R²<input type="number" min="0" max="1" step="0.001" data-form="metodados" data-key="r2"></label>
+<label>R² ajustado<input type="number" min="0" max="1" step="0.001" data-form="metodados" data-key="r2aj"></label>
+<div></div>
+</div></div>
+
+<div class="subgroup"><h3>Resultados da inferência</h3>
+<div class="fieldgrid">
+<label>VU estimado / central (R$/m²)<input type="number" min="0" step="0.01" data-form="metodados" data-key="vuCentral"></label>
+<label>Limite inferior (R$/m²)<input type="number" min="0" step="0.01" data-form="metodados" data-key="limInf"></label>
+<label>Limite superior (R$/m²)<input type="number" min="0" step="0.01" data-form="metodados" data-key="limSup"></label>
+
+<label>VU adotado (R$/m²)<input type="number" min="0" step="0.01" data-form="metodados" data-key="vuAdotado"></label>
+<div></div><div></div>
+
+<label>Grau de fundamentação
+<select data-form="metodados" data-key="grauFund"><option value=""></option><option>I</option><option>II</option><option>III</option></select></label>
+<label>Grau de precisão
+<select data-form="metodados" data-key="grauPrecisao"><option value=""></option><option>I</option><option>II</option><option>III</option></select></label>
+<div></div>
+</div></div>
+
+<div class="subgroup"><h3>Variáveis adotadas no modelo</h3>
+<p class="muted">Cadastre de 1 a 8 variáveis. As colunas da guia Amostras e do Anexo I são criadas automaticamente.</p>
+<div id="vars"></div>
+<div class="actions" style="margin-top:12px"><button id="addVar">Adicionar variável</button></div>
+</div>
+</div>
+</section>
+
+<section id="amos" class="tabpane hidden">
+<div id="methodBlock" class="card hidden" style="border-left:5px solid #9b1c1c">
+<h2>AMOSTRAS BLOQUEADA</h2>
+<p id="methodBlockMsg" class="muted">Conclua o cadastro das variáveis na Metodologia para iniciar o preenchimento dos dados amostrais.</p>
+</div>
+<div class="card">
+<div class="kpis">
+<div class="kpi"><b>Amostras iniciadas</b><span id="ki">0</span></div>
+<div class="kpi"><b>Amostras completas</b><span id="kc">0</span></div>
+<div class="kpi"><b>Amostras com pendências</b><span id="kp">0</span></div>
+<div class="kpi"><b>Status geral</b><span id="ks" style="font-size:13px">SEM AMOSTRAS</span></div>
+</div>
+</div>
+<div class="card">
+<h2>Amostras</h2>
+<div class="actions" style="margin-bottom:12px">
+<button id="addSample" class="primary">Adicionar amostra</button>
+<button id="importSamples">Importar amostras</button>
+<input id="fileSamples" type="file" accept=".xlsx,.xls,.csv" class="hidden">
+<button id="saveProject">Salvar trabalho</button>
+<button id="openProject">Abrir trabalho</button>
+<input id="fileProject" type="file" accept=".json,application/json" class="hidden">
+</div>
+<div id="sampleImportPanel" class="card hidden" style="border-left:5px solid var(--azul)">
+<h2>Importação assistida de amostras</h2>
+<p class="muted">A ferramenta associa automaticamente apenas cabeçalhos reconhecidos com segurança. Confira as associações antes de importar. Colunas sem correspondência podem ser ignoradas.</p>
+<div id="sampleImportInfo" class="muted" style="margin-bottom:10px"></div>
+<div class="scroll"><table><thead><tr><th>Campo da ferramenta</th><th>Coluna encontrada no arquivo</th><th>Prévia</th></tr></thead><tbody id="sampleMapBody"></tbody></table></div>
+<div class="actions" style="margin-top:12px"><button id="confirmSampleImport" class="primary">Importar campos associados</button><button id="cancelSampleImport">Cancelar</button></div>
+</div>
+<div class="scroll"><table><thead><tr id="sampleHead"></tr></thead><tbody id="sampleBody"></tbody></table></div>
+</div>
+</section>
+
+
+<section id="diag" class="tabpane hidden">
+<div class="card"><h2>6. Diagnóstico de Mercado</h2><div class="fieldgrid">
+<label>Desempenho de mercado<select data-form="diag" data-key="desempenho"><option value=""></option><option>Recessivo</option><option>Estável</option><option>Aquecido</option></select></label>
+<label>Demanda<select data-form="diag" data-key="demanda"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Quantidade de ofertas<select data-form="diag" data-key="ofertas"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Liquidez<select data-form="diag" data-key="liquidez"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Prazo estimado de comercialização<select data-form="diag" data-key="prazo"><option value=""></option><option>Até 3 meses</option><option>3 a 6 meses</option><option>6 a 12 meses</option><option>Acima de 12 meses</option></select></label>
+<label class="wide">Facilitadores de negociação<input data-form="diag" data-key="facilitadores"></label>
+<label class="wide">Dificultadores de negociação<input data-form="diag" data-key="dificultadores"></label>
+<label class="full">Observações de mercado<textarea data-form="diag" data-key="obs"></textarea></label>
+</div></div></section>
+
+<section id="resultado" class="tabpane hidden"><div class="card"><h2>Resultado da avaliação</h2><div class="subgroup"><h3>Cálculo</h3><div class="fieldgrid"><label>VU adotado (R$/m²)<input type="number" step="any" data-form="resultado" data-key="vu" readonly title="Preenchido automaticamente pela Metodologia"></label><label>Área adotada (m²)<input type="number" step="any" data-form="resultado" data-key="areaAdotada" readonly title="Preenchido automaticamente pela Caracterização"></label><div></div><label>Valor calculado (R$)<input type="number" step="any" data-form="resultado" data-key="valorCalculado" readonly title="Calculado automaticamente"></label><label>Valor arredondado (R$)<input type="number" step="any" data-form="resultado" data-key="valorArredondado" readonly title="Calculado automaticamente"></label><div></div><label class="wide">Adotar o valor arredondado?<select data-form="resultado" data-key="adotar"><option value=""></option><option>Sim</option><option>Não</option></select></label><div></div><label class="wide">Valor adotado (R$)<input type="number" step="any" data-form="resultado" data-key="vm" readonly title="Definido pela escolha de arredondamento"></label><div></div></div></div><div class="subgroup"><h3>Valores a apresentar — conforme Objetivo da guia Início</h3><div class="resultgrid"><label data-result-field="mercado">Valor de Mercado (R$)<input type="number" step="any" data-form="resultado" data-key="valorMercado" readonly title="Transportado automaticamente do Valor adotado"></label><div></div><label data-result-field="vliMax">VLI Máximo (R$)<input type="number" step="any" data-form="resultado" data-key="vliMax"></label><label data-result-field="prazoMin">Prazo Mínimo<input data-form="resultado" data-key="prazoMin"></label><label data-result-field="vliMin">VLI Mínimo (R$)<input type="number" step="any" data-form="resultado" data-key="vliMin"></label><label data-result-field="prazoMax">Prazo Máximo<input data-form="resultado" data-key="prazoMax"></label><label data-result-field="locacao">Valor de Locação (R$/mês)<input type="number" step="any" data-form="resultado" data-key="valorLocacao"></label><label data-result-field="locacaoMax">Valor de Locação Máximo (R$/mês)<input type="number" step="any" data-form="resultado" data-key="valorMaxLocacao"></label></div></div></div></section>
+
+<section id="obs" class="tabpane hidden"><div class="card"><h2>8. Observações Gerais do Laudo</h2>
+<p class="muted">Registre quaisquer ressalvas, esclarecimentos, particularidades do imóvel ou aspectos técnicos relevantes que não tenham sido contemplados nos campos estruturados.</p>
+<textarea data-form="observacoes" data-key="gerais" style="min-height:180px"></textarea></div></section>
+
+<section id="docs" class="tabpane hidden"><div class="card"><h2>9. Anexos que acompanham o laudo</h2>
+<div class="docgrid"><b>Anexo</b><b>Situação</b><b>Observação</b><b>Arquivo PDF</b></div>
+<div class="docgrid">
+<div>Matrícula</div>
+<select data-form="docs" data-key="matriculaStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="matriculaObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="matricula" disabled><div class="docname" data-doc-name="matricula">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Relatório fotográfico do avaliando</div>
+<select data-form="docs" data-key="fotoAvaliandoStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="fotoAvaliandoObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="fotoAvaliando" disabled><div class="docname" data-doc-name="fotoAvaliando">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Relatório fotográfico das amostras</div>
+<select data-form="docs" data-key="fotoAmostrasStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="fotoAmostrasObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="fotoAmostras" disabled><div class="docname" data-doc-name="fotoAmostras">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Relatório estatístico SISDEA</div>
+<select data-form="docs" data-key="sisdeaStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="sisdeaObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="sisdea" disabled><div class="docname" data-doc-name="sisdea">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Mapa de localização das amostras</div>
+<select data-form="docs" data-key="mapaStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="mapaObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="mapa" disabled><div class="docname" data-doc-name="mapa">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>ART/RRT</div>
+<select data-form="docs" data-key="artStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="artObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="art" disabled><div class="docname" data-doc-name="art">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Memória / planilha de cálculo do VLI</div>
+<select data-form="docs" data-key="vliStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="vliObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="vli" disabled><div class="docname" data-doc-name="vli">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Documentação complementar</div>
+<select data-form="docs" data-key="complementarStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="complementarObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="complementar" disabled><div class="docname" data-doc-name="complementar">Nenhum arquivo selecionado</div></div>
+</div><div class="subgroup"><h3>10. Encerramento</h3><div class="fieldgrid">
+<label>Local<input data-form="encerramento" data-key="local"></label>
+<label>Data de emissão<input type="date" data-form="encerramento" data-key="dataEmissao"></label>
+<label>Empresa credenciada<input data-form="encerramento" data-key="empresa"></label>
+<label>Representante legal<input data-form="encerramento" data-key="representante"></label>
+<label>CPF<input data-form="encerramento" data-key="cpf"></label>
+<label>Responsável técnico<input data-form="encerramento" data-key="responsavel"></label>
+<label>CREA / CAU<input data-form="encerramento" data-key="crea"></label>
+</div></div></div></section>
+<section id="anexo" class="tabpane hidden">
+<div class="card">
+<h2>Anexo I – Dados amostrais</h2>
+<p class="muted">A visualização abaixo apresenta somente amostras completas e somente as variáveis cadastradas.</p>
+<div class="kpis" style="margin-bottom:14px">
+<div class="kpi"><b>Amostras no Anexo</b><span id="annCount">0</span></div>
+<div class="kpi"><b>Variáveis utilizadas</b><span id="annVars">0</span></div>
+<div class="kpi"><b>Pendências na avaliação</b><span id="annPend">0</span></div>
+<div class="kpi"><b>Situação para PDF</b><span id="annPdf" style="font-size:13px">BLOQUEADO</span></div>
+</div>
+<div class="scroll"><table><thead><tr id="annHead"></tr></thead><tbody id="annBody"></tbody></table></div>
+<div class="actions" style="margin-top:14px">
+<button id="exportCsv">Exportar tabela (CSV)</button>
+<button id="exportData">Exportar dados estruturados</button>
+<button id="exportXlsx" class="primary">Gerar XLSX</button>
+<button id="pdfCheck" class="primary" style="display:none">Gerar PDF do Anexo I</button>
+</div>
+<p id="pdfMsg" class="muted"></p>
+</div>
+</section>
+</div>
+<script>
+const APP_VERSION="16.2_WEB";
+const state={
+ version:"16.2_WEB",
+ meta:{created:new Date().toISOString(),updated:new Date().toISOString()},
+ inicio:{},local:{},carac:{},metodados:{},resultado:{},diag:{},observacoes:{},docs:{},encerramento:{},
+ vars:[],samples:[]
+};
+const fixed=[
+["endereco","Endereço / identificação"],["municipio","Município"],["uf","UF"],["fonte","Fonte"],
+["data","Data pesquisa"],["lat","Latitude"],["lon","Longitude"],["area","Área (m²)"],["valor","Valor total (R$)"]
+];
+const ufs=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+function uid(){return Math.random().toString(36).slice(2)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+function formVal(form,key){return state[form]?.[key]??""}
+
+function normalizeDecimal(v){return String(v??"").trim().replace(",",".")}
+function cepValid(v){return /^\d{5}-?\d{3}$/.test(String(v??"").trim())}
+function coordValid(v,min,max){
+ let s=normalizeDecimal(v); if(!/^-?\d+(\.\d+)?$/.test(s))return false;
+ let n=Number(s);return Number.isFinite(n)&&n>=min&&n<=max;
+}
+const REQUIRED={inicio:["os","numeroLaudo","dataVistoria","dataBase","objetivo","finalidade","tipologia","uso","condicaoVistoria","acessoInterior","proprietario","endereco","municipio","uf","cep","matricula","cartorio","latitude","longitude"],local:["usoPred","ocupacao","padrao","densidade","acessoViario","transportePublico","estacionamento","viasPrincipais","rodovias","trilhos","agua","esgoto","energia","iluminacao","pavimentacao","drenagem","dados","gas","comercioExiste","comercioObs","escolasExiste","escolasObs","saudeExiste","saudeObs","lazerExiste","lazerObs","shoppingExiste","shoppingObs","metroExiste","metroObs","irregularExiste","irregularObs","outroExiste","outroObs"],carac:["areaMatricula","naoAverbada","areaAdotada","dormitorios","suites","banheiros","vagas","andar","piscina","academia","salaoFestas","churrasqueira","playground","quadra","salaoJogos","gourmet","outroLazer","impRegularizacao","motivoRegularizacao","impAcesso","motivoAcesso","docVistoria","divergencias"],metodados:["metodo","totalDados","dadosUtilizados","totalVariaveis","variaveisUtilizadas","equacao","r2","r2aj","vuCentral","limInf","limSup","vuAdotado","grauFund","grauPrecisao"],resultado:["vu","areaAdotada","valorCalculado","valorArredondado","adotar","vm"],diag:["desempenho","demanda","ofertas","liquidez","prazo"],encerramento:["local","dataEmissao","empresa","representante","cpf","responsavel","crea"]};
+function isRequiredField(form,key){
+ let req=(REQUIRED[form]||[]).includes(key);
+ if(form==="carac"){
+   if(key==="motivoRegularizacao")req=state.carac?.impRegularizacao==="Sim";
+   if(key==="motivoAcesso")req=state.carac?.impAcesso==="Sim";
+   if(key==="divergencias")req=state.carac?.docVistoria==="Não";
+ }
+ return req;
+}
+function paintRequired(){document.querySelectorAll("[data-form][data-key]").forEach(el=>{let req=isRequiredField(el.dataset.form,el.dataset.key);let filled=String(el.value??"").trim()!=="";
+   el.classList.toggle("required-field",req&&!filled);});}
+
+function metodologiaErrors(){
+ let e=[],m=state.metodados||{};
+ const td=Number(m.totalDados),du=Number(m.dadosUtilizados),tv=Number(m.totalVariaveis),vu=Number(m.variaveisUtilizadas);
+ if(String(m.totalDados??"").trim()&&String(m.dadosUtilizados??"").trim()&&du>td)e.push("Dados utilizados no modelo não podem superar o total de dados.");
+ if(String(m.totalVariaveis??"").trim()&&String(m.variaveisUtilizadas??"").trim()&&vu>tv)e.push("Variáveis utilizadas no modelo não podem superar o total de variáveis.");
+ if(String(m.r2??"").trim()&&(Number(m.r2)<0||Number(m.r2)>1))e.push("R² deve estar entre 0 e 1.");
+ if(String(m.r2aj??"").trim()&&(Number(m.r2aj)<0||Number(m.r2aj)>1))e.push("R² ajustado deve estar entre 0 e 1.");
+ return e;
+}
+function inicioErrors(){
+ let e=[];
+ let cep=state.inicio?.cep,lat=state.inicio?.latitude,lon=state.inicio?.longitude;
+ if(String(cep??"").trim()&&!cepValid(cep))e.push("CEP deve conter 8 dígitos.");
+ if(String(lat??"").trim()&&!coordValid(lat,-90,90))e.push("Latitude inválida: use decimal entre -90 e 90.");
+ if(String(lon??"").trim()&&!coordValid(lon,-180,180))e.push("Longitude inválida: use decimal entre -180 e 180.");
+ return e;
+}
+function formatCepInput(el){
+ let d=el.value.replace(/\D/g,"").slice(0,8);
+ el.value=d.length>5?d.slice(0,5)+"-"+d.slice(5):d;
+}
+function paintInicioValidation(){
+ let errors=inicioErrors(),msg=document.querySelector("#inicioValidation");
+ [["inicioCep",state.inicio?.cep&& !cepValid(state.inicio.cep)],
+  ["inicioLat",state.inicio?.latitude&& !coordValid(state.inicio.latitude,-90,90)],
+  ["inicioLon",state.inicio?.longitude&& !coordValid(state.inicio.longitude,-180,180)]].forEach(([id,bad])=>{
+   let el=document.querySelector("#"+id);if(el)el.classList.toggle("field-invalid",!!bad);
+ });
+ if(msg){msg.textContent=errors.join(" ");msg.classList.toggle("validation-error",errors.length>0)}
+}
+function parseBRNumber(v){
+ let s=String(v??"").trim();
+ if(!s)return NaN;
+ if(s.includes(",") && s.includes(".")) s=s.replace(/\./g,"").replace(",",".");
+ else s=s.replace(",",".");
+ return Number(s);
+}
+function roundedMarketValue(v){
+ let n=parseBRNumber(v);
+ if(!Number.isFinite(n) || n===0)return Number.isFinite(n)?"0.00":"";
+ // Arredondamento automático por ordem de grandeza (aprox. 3 algarismos significativos),
+ // mantendo a diferença bem abaixo do limite de 1%.
+ let step=Math.pow(10,Math.max(0,Math.floor(Math.log10(Math.abs(n)))-2));
+ return (Math.round(n/step)*step).toFixed(2);
+}
+function syncResultado(){
+ if(!state.resultado)state.resultado={};
+
+ let vu=state.metodados?.vuAdotado;
+ let area=state.carac?.areaAdotada;
+ state.resultado.vu=String(vu??"").trim();
+ state.resultado.areaAdotada=String(area??"").trim();
+
+ let nvu=parseBRNumber(vu), na=parseBRNumber(area);
+ if(Number.isFinite(nvu)&&Number.isFinite(na)&&String(vu??"").trim()!==""&&String(area??"").trim()!==""){
+   state.resultado.valorCalculado=(nvu*na).toFixed(2);
+   state.resultado.valorArredondado=roundedMarketValue(state.resultado.valorCalculado);
+ }else{
+   state.resultado.valorCalculado="";
+   state.resultado.valorArredondado="";
+ }
+
+ // O valor adotado depende exclusivamente da escolha do avaliador.
+ if(state.resultado.adotar==="Sim"){
+   state.resultado.vm=state.resultado.valorArredondado;
+ }else if(state.resultado.adotar==="Não"){
+   state.resultado.vm=state.resultado.valorCalculado;
+ }else{
+   state.resultado.vm="";
+ }
+
+ // Valor de Mercado recebe automaticamente o valor adotado.
+ state.resultado.valorMercado=state.resultado.vm;
+
+ ["vu","areaAdotada","valorCalculado","valorArredondado","vm","valorMercado"].forEach(k=>{
+   let el=document.querySelector(`[data-form="resultado"][data-key="${k}"]`);
+   if(el)el.value=state.resultado[k]??"";
+ });
+}
+function bindForms(){
+ document.querySelectorAll("[data-form][data-key]").forEach(el=>{
+   let f=el.dataset.form,k=el.dataset.key;
+   el.value=formVal(f,k);
+   if(el.id==="inicioCep")formatCepInput(el);
+   el.oninput=el.onchange=()=>{
+     if(el.id==="inicioCep")formatCepInput(el);
+     if(!state[f])state[f]={};
+     state[f][k]=el.value; state.meta.updated=new Date().toISOString(); if(f==="docs")syncDocFileControls(); syncResultado(); paintInicioValidation(); paintRequired(); updateReview();
+   };
+ });
+ let uf=document.querySelector("#inicioUf");
+ if(uf && uf.options.length===0){
+   uf.innerHTML='<option value=""></option>'+ufs.map(x=>`<option>${x}</option>`).join("");
+   uf.value=formVal("inicio","uf");
+ }
+ syncResultado();paintInicioValidation();paintRequired();
+}
+function sectionComplete(obj,keys){return keys.every(k=>String(obj?.[k]??"").trim()!=="")}
+function sectionStarted(obj){return Object.values(obj||{}).some(v=>String(v??"").trim()!=="")}
+function methodologyStarted(){return state.vars.some(v=>String(v.name||v.transform||v.desc||v.subject||v.impact||"").trim()!=="")}
+function tabStatuses(){
+ const iniReq=["os","numeroLaudo","dataVistoria","dataBase","objetivo","finalidade","tipologia","uso","condicaoVistoria","acessoInterior","proprietario","endereco","municipio","uf","cep","matricula","cartorio","latitude","longitude"];
+ const locReq=["usoPred","ocupacao","padrao","densidade","acessoViario","transportePublico","estacionamento","viasPrincipais","rodovias","trilhos","agua","esgoto","energia","iluminacao","pavimentacao","drenagem","dados","gas","comercioExiste","comercioObs","escolasExiste","escolasObs","saudeExiste","saudeObs","lazerExiste","lazerObs","shoppingExiste","shoppingObs","metroExiste","metroObs","irregularExiste","irregularObs","outroExiste","outroObs"];
+ let carReq=["areaMatricula","naoAverbada","areaAdotada","dormitorios","suites","banheiros","vagas","andar","piscina","academia","salaoFestas","churrasqueira","playground","quadra","salaoJogos","gourmet","outroLazer","impRegularizacao","impAcesso","docVistoria"];
+ if(state.carac?.impRegularizacao==="Sim")carReq.push("motivoRegularizacao");
+ if(state.carac?.impAcesso==="Sim")carReq.push("motivoAcesso");
+ if(state.carac?.docVistoria==="Não")carReq.push("divergencias");
+ const metReq=["metodo","totalDados","dadosUtilizados","totalVariaveis","variaveisUtilizadas","equacao","r2","r2aj","vuCentral","limInf","limSup","vuAdotado","grauFund","grauPrecisao"];
+ const resReq=["vu","areaAdotada","valorCalculado","valorArredondado","adotar","vm"];
+ const diagReq=["desempenho","demanda","ofertas","liquidez","prazo"];
+ const iniciadas=state.samples.filter(started), amComplete=iniciadas.length>0&&iniciadas.every(complete);
+ let metBase=sectionComplete(state.metodados,metReq)&&methodReady();
+ return {
+   inicio:inicioErrors().length?"error":sectionComplete(state.inicio,iniReq)?"complete":sectionStarted(state.inicio)?"progress":"empty",
+   local:sectionComplete(state.local,locReq)?"complete":sectionStarted(state.local)?"progress":"empty",
+   carac:sectionComplete(state.carac,carReq)?"complete":sectionStarted(state.carac)?"progress":"empty",
+   met:metodologiaErrors().length?"error":metBase?"complete":(sectionStarted(state.metodados)||methodologyStarted())?"progress":"empty",
+   amos:amComplete?"complete":iniciadas.length?"progress":"empty",
+   resultado:sectionComplete(state.resultado,resReq)?"complete":sectionStarted(state.resultado)?"progress":"empty",
+   diag:sectionComplete(state.diag,diagReq)?"complete":sectionStarted(state.diag)?"progress":"empty",
+   obs:sectionStarted(state.observacoes)?"complete":"empty",
+   docs:sectionComplete(state.encerramento,["local","dataEmissao","empresa","representante","cpf","responsavel","crea"])?"complete":(sectionStarted(state.docs)||sectionStarted(state.encerramento))?"progress":"empty"
+ };
+}
+function updateTabStatus(){
+ const sts=tabStatuses();
+ Object.entries(sts).forEach(([tab,status])=>{
+   let b=document.querySelector(`[data-tab="${tab}"]`);if(!b)return;
+   b.classList.remove("status-empty","status-progress","status-complete","status-error");
+   b.classList.add("status-"+status);
+   b.title=status==="complete"?"Etapa completa":status==="error"?"Há dados inválidos nesta etapa":status==="progress"?"Etapa iniciada com pendências":"Etapa não iniciada";
+ });
+ // Anexo é saída/conferência, não etapa de preenchimento.
+ let ab=document.querySelector('[data-tab="anexo"]');
+ if(ab){ab.classList.remove("status-empty","status-progress","status-complete");ab.title="Conferência do Anexo I";}
+ const required=["inicio","local","carac","met","amos","resultado","diag","docs"],ready=required.every(k=>sts[k]==="complete");
+ let bar=document.querySelector("#emissionBar"),txt=document.querySelector("#emissionState");
+ if(bar){bar.classList.toggle("ready",ready);bar.classList.toggle("pending",!ready)}
+ if(txt)txt.textContent=ready?"LIBERADA":"PENDENTE";
+}
+function updateReview(){updateTabStatus()}
+function renderVars(){
+ const el=document.querySelector("#vars"); el.innerHTML="";
+ state.vars.forEach((v,i)=>{
+  if(!Array.isArray(v.classes))v.classes=[];
+  const d=document.createElement("div"); d.className="grid"; d.style.marginBottom="14px";
+  let classHtml="";
+  if(v.type==="Qualitativa"){
+    classHtml=`<div class="classbox">
+      <label>Classificação adotada <span class="badge">uso específico desta avaliação</span></label>
+      <div class="muted">Defina o código numérico utilizado no modelo e o significado correspondente.</div>
+      <div data-classlist="${v.id}">
+      ${v.classes.map(c=>`<div class="classrow">
+        <div><label>Código</label><input inputmode="decimal" data-v="${v.id}" data-c="${c.id}" data-cf="code" value="${esc(c.code)}"></div>
+        <div><label>Descrição</label><input data-v="${v.id}" data-c="${c.id}" data-cf="label" value="${esc(c.label)}"></div>
+        <button data-delc="${v.id}:${c.id}">Remover</button>
+      </div>`).join("")}
+      </div>
+      <button style="margin-top:8px" data-addc="${v.id}">Adicionar classificação</button>
+    </div>`;
+  }
+  d.innerHTML=`<div><label>Variável ${i+1} – Nome</label><input data-v="${v.id}" data-f="name" value="${esc(v.name)}"></div>
+  <div><label>Tipo</label><select data-v="${v.id}" data-f="type"><option ${v.type==="Quantitativa"?"selected":""}>Quantitativa</option><option ${v.type==="Qualitativa"?"selected":""}>Qualitativa</option></select></div>
+  <div><label>Transformação</label><select data-v="${v.id}" data-f="transform">
+    ${["","x","1/x","x²","1/x²","x³","1/x³","ln(x)","1/ln(x)","√x","1/√x","e^x","Dummies / códigos"].map(t=>`<option value="${esc(t)}" ${v.transform===t?"selected":""}>${esc(t)}</option>`).join("")}
+  </select></div>
+  <div><label>Valor do avaliando</label><input data-v="${v.id}" data-f="subject" value="${esc(v.subject)}" inputmode="decimal"></div>
+  <div><label>Impacto sobre o modelo</label><select data-v="${v.id}" data-f="impact"><option value=""></option><option ${v.impact==="Positivo"?"selected":""}>Positivo</option><option ${v.impact==="Negativo"?"selected":""}>Negativo</option></select></div>
+  <div style="grid-column:span 3"><label>Descrição da variável</label><textarea data-v="${v.id}" data-f="desc">${esc(v.desc)}</textarea></div>
+  <div><label>&nbsp;</label><button data-delv="${v.id}">Remover variável</button></div>${classHtml}`;
+  el.appendChild(d);
+ });
+ el.querySelectorAll("[data-v][data-f]").forEach(x=>{
+ x.onfocus=()=>{x.dataset.old=x.value};
+ x.onchange=()=>{
+   let v=state.vars.find(v=>v.id===x.dataset.v), old=x.dataset.old??v[x.dataset.f];
+   if(x.dataset.f==="type" && hasStartedSamples() && old!==x.value){
+     if(!confirm("Já existem amostras iniciadas. Alterar o tipo da variável pode invalidar dados já preenchidos. Deseja continuar?")){
+       x.value=old; return;
+     }
+   }
+   v[x.dataset.f]=x.value;
+   if(x.dataset.f==="type")renderVars();
+   renderSamples();renderAnnex();updateMethodGate();
+ };
+});
+ el.querySelectorAll("[data-v][data-c]").forEach(x=>x.oninput=()=>{
+   let v=state.vars.find(v=>v.id===x.dataset.v),c=v.classes.find(c=>c.id===x.dataset.c);
+   c[x.dataset.cf]=x.value; updateMethodGate();
+   // Não recria a própria tela de metodologia durante a digitação.
+   // Amostras/Anexo serão atualizados ao navegar ou concluir a edição.
+});
+ el.querySelectorAll("[data-addc]").forEach(x=>x.onclick=()=>{let v=state.vars.find(v=>v.id===x.dataset.addc);v.classes.push({id:uid(),code:"",label:""});renderVars();renderSamples();renderAnnex()});
+ el.querySelectorAll("[data-delc]").forEach(x=>x.onclick=()=>{let [vid,cid]=x.dataset.delc.split(":");let v=state.vars.find(v=>v.id===vid);v.classes=v.classes.filter(c=>c.id!==cid);renderVars();renderSamples();renderAnnex()});
+ el.querySelectorAll("[data-delv]").forEach(x=>x.onclick=()=>{
+ if(hasStartedSamples() && !confirm("Já existem amostras iniciadas. Excluir esta variável removerá sua estrutura da avaliação e poderá descartar dados associados. Deseja continuar?"))return;
+ state.vars=state.vars.filter(v=>v.id!==x.dataset.delv);renderVars();renderSamples();renderAnnex();updateMethodGate();updateTabStatus();bindForms();
+});
+}
+function methodIssues(){
+ let issues=[];
+ if(state.vars.length===0)return ["Cadastre pelo menos uma variável."];
+ state.vars.forEach((v,i)=>{
+   let p="Variável "+(i+1)+": ";
+   if(!String(v.name||"").trim())issues.push(p+"Nome");
+   if(!String(v.type||"").trim())issues.push(p+"Tipo");
+   if(!String(v.transform||"").trim())issues.push(p+"Transformação");
+   if(!String(v.desc||"").trim())issues.push(p+"Descrição");
+   if(!String(v.subject||"").trim())issues.push(p+"Valor do avaliando");
+   if(!String(v.impact||"").trim())issues.push(p+"Impacto sobre o modelo");
+   if(v.type==="Qualitativa"){
+     let cls=Array.isArray(v.classes)?v.classes:[];
+     if(cls.length===0)issues.push(p+"Classificação adotada");
+     else {
+       cls.forEach((c,j)=>{
+         if(!String(c.code||"").trim()||!String(c.label||"").trim())
+           issues.push(p+"Classificação "+(j+1)+" incompleta");
+       });
+       let codes=cls.map(c=>String(c.code||"").trim()).filter(Boolean);
+       if(new Set(codes).size!==codes.length)issues.push(p+"Códigos de classificação duplicados");
+     }
+   }
+ });
+ return issues;
+}
+function methodReady(){return methodIssues().length===0}
+function hasStartedSamples(){return state.samples.some(started)}
+function updateMethodGate(){
+ const tab=document.querySelector("#tabAmostras"), block=document.querySelector("#methodBlock");
+ let issues=methodIssues(), ready=issues.length===0;
+ tab.classList.toggle("locked",!ready);
+ tab.title=ready?"":"Conclua a Metodologia antes de preencher as Amostras.";
+ if(block){
+   block.classList.toggle("hidden",ready);
+   document.querySelector("#methodBlockMsg").textContent=ready?"":
+     "Conclua a Metodologia. Pendências: "+issues.join("; ")+".";
+ }
+}
+function blankSample(){return {id:uid(),endereco:"",municipio:"",uf:"",fonte:"",data:"",lat:"",lon:"",area:"",valor:"",vars:{}}}
+function num(v){if(typeof v==="number")return v; let s=String(v??"").trim().replace(",","."); return s===""?NaN:Number(s)}
+function validDate(v){if(!v)return false; let d=new Date(v+"T00:00:00"); return !isNaN(d)}
+function started(s){return fixed.some(([k])=>String(s[k]??"").trim()!=="")||state.vars.some(v=>String(s.vars[v.id]??"").trim()!=="")}
+function complete(s){
+ if(!started(s))return false;
+ if(!s.endereco||!s.municipio||!s.uf||!s.fonte||!validDate(s.data))return false;
+ let la=num(s.lat),lo=num(s.lon),a=num(s.area),val=num(s.valor);
+ if(!(la>=-34&&la<=6&&lo>=-74&&lo<=-34&&a>0&&val>0))return false;
+ return state.vars.filter(v=>v.name.trim()).every(v=>{
+   let raw=String(s.vars[v.id]??"").trim(); if(raw==="")return false;
+   if(v.type==="Qualitativa" && Array.isArray(v.classes) && v.classes.some(c=>String(c.code).trim()!=="")){
+     return v.classes.some(c=>String(c.code).trim()===raw);
+   }
+   return !isNaN(num(raw));
+ });
+}
+function pendingFields(s){
+ let p=[];
+ if(!s.endereco)p.push("Endereço");
+ if(!s.municipio)p.push("Município");
+ if(!s.uf)p.push("UF");
+ if(!s.fonte)p.push("Fonte");
+ if(!validDate(s.data))p.push("Data");
+ let la=num(s.lat),lo=num(s.lon),a=num(s.area),val=num(s.valor);
+ if(!(la>=-34&&la<=6))p.push("Latitude");
+ if(!(lo>=-74&&lo<=-34))p.push("Longitude");
+ if(!(a>0))p.push("Área");
+ if(!(val>0))p.push("Valor total");
+ state.vars.filter(v=>v.name.trim()).forEach(v=>{
+   let raw=String(s.vars[v.id]??"").trim();
+   if(raw==="")p.push(v.name);
+   else if(v.type==="Qualitativa" && Array.isArray(v.classes) && v.classes.some(c=>String(c.code).trim()!=="")){
+     if(!v.classes.some(c=>String(c.code).trim()===raw))p.push(v.name);
+   } else if(isNaN(num(raw)))p.push(v.name);
+ });
+ return p;
+}
+function fmtCoord(v){let n=num(v);return isNaN(n)?"":n.toFixed(7)}
+function vu(s){let a=num(s.area),v=num(s.valor);return a>0&&v>0?(v/a).toFixed(2):""}
+function renderSamples(){
+ const h=document.querySelector("#sampleHead");
+ h.innerHTML=["ID",...fixed.map(x=>x[1]),"VU (R$/m²)",...state.vars.filter(v=>v.name.trim()).map(v=>v.name),"Status","Pendências",""].map(x=>`<th>${esc(x)}</th>`).join("");
+ const b=document.querySelector("#sampleBody"); b.innerHTML="";
+ state.samples.forEach((s,i)=>{
+  let tr=document.createElement("tr"); let st=started(s),co=complete(s); tr.className=st?(co?"completa":"incompleta"):"";
+  let cells=[`<td>AM${String(i+1).padStart(3,"0")}</td>`];
+  fixed.forEach(([k,label])=>{
+   if(k==="uf") cells.push(`<td><select data-s="${s.id}" data-k="${k}"><option></option>${ufs.map(u=>`<option ${s.uf===u?"selected":""}>${u}</option>`).join("")}</select></td>`);
+   else if(k==="data") cells.push(`<td><input type="date" data-s="${s.id}" data-k="${k}" value="${esc(s[k])}"></td>`);
+   else cells.push(`<td><input data-s="${s.id}" data-k="${k}" value="${esc(s[k])}" ${["lat","lon","area","valor"].includes(k)?'inputmode="decimal"':""}></td>`);
+  });
+  cells.push(`<td data-vu>${vu(s)}</td>`);
+  state.vars.filter(v=>v.name.trim()).forEach(v=>{
+   let current=String(s.vars[v.id]??"");
+   if(v.type==="Qualitativa" && Array.isArray(v.classes) && v.classes.some(c=>String(c.code).trim()!=="")){
+     cells.push(`<td><select data-s="${s.id}" data-var="${v.id}"><option value=""></option>${
+       v.classes.filter(c=>String(c.code).trim()!=="").map(c=>`<option value="${esc(c.code)}" ${current===String(c.code)?"selected":""}>${esc(c.code)} – ${esc(c.label)}</option>`).join("")
+     }</select></td>`);
+   } else {
+     cells.push(`<td><input data-s="${s.id}" data-var="${v.id}" value="${esc(current)}" inputmode="decimal"></td>`);
+   }
+ });
+  let pend=pendingFields(s);
+  cells.push(`<td class="status">${!st?"":co?"COMPLETA":"INCOMPLETA"}</td>
+  <td class="pendingCell">${!st?"":co?'<span class="oktxt">Sem pendências</span>':`<span class="pend">${esc(pend.join(", "))}</span>`}</td>
+  <td><button data-dups="${s.id}">Duplicar</button> <button data-dels="${s.id}">Excluir</button></td>`);
+  tr.innerHTML=cells.join(""); b.appendChild(tr);
+ });
+ b.querySelectorAll("[data-s]").forEach(x=>{
+   const sync=()=>{
+     let s=state.samples.find(s=>s.id===x.dataset.s);
+     if(x.dataset.var)s.vars[x.dataset.var]=x.value; else s[x.dataset.k]=x.value;
+     // Atualiza apenas os elementos derivados da própria linha, sem reconstruir os inputs.
+     let tr=x.closest("tr"), idx=state.samples.indexOf(s), st=started(s), co=complete(s);
+     tr.className=st?(co?"completa":"incompleta"):"";
+     let statusCell=tr.querySelector(".status");
+     if(statusCell)statusCell.textContent=!st?"":co?"COMPLETA":"INCOMPLETA";
+     let pc=tr.querySelector(".pendingCell"), pend=pendingFields(s);
+     if(pc)pc.innerHTML=!st?"":co?'<span class="oktxt">Sem pendências</span>':`<span class="pend">${esc(pend.join(", "))}</span>`;
+     let vuCell=tr.querySelector("[data-vu]");
+     if(vuCell)vuCell.textContent=vu(s);
+     updateKpis();
+     renderAnnex();
+   };
+   x.addEventListener("input",sync);
+   x.addEventListener("change",sync);
+ });
+ b.querySelectorAll("[data-dels]").forEach(x=>x.onclick=()=>{state.samples=state.samples.filter(s=>s.id!==x.dataset.dels);renderSamples();renderAnnex()});
+ b.querySelectorAll("[data-dups]").forEach(x=>x.onclick=()=>{
+   let original=state.samples.find(s=>s.id===x.dataset.dups);
+   let copy=JSON.parse(JSON.stringify(original)); copy.id=uid();
+   let pos=state.samples.indexOf(original); state.samples.splice(pos+1,0,copy);
+   renderSamples();renderAnnex();
+ });
+ updateKpis();
+}
+function updateKpis(){
+ let ini=state.samples.filter(started).length, comp=state.samples.filter(complete).length, pend=ini-comp;
+ document.querySelector("#ki").textContent=ini;document.querySelector("#kc").textContent=comp;document.querySelector("#kp").textContent=pend;
+ document.querySelector("#ks").textContent=ini===0?"SEM AMOSTRAS":pend?"PREENCHIMENTO INCOMPLETO":"PREENCHIMENTO COMPLETO";
+}
+function renderAnnex(){
+ let vars=state.vars.filter(v=>v.name.trim());
+ document.querySelector("#annHead").innerHTML=["ID",...fixed.map(x=>x[1]),"VU (R$/m²)",...vars.map(v=>v.name)].map(x=>`<th>${esc(x)}</th>`).join("");
+ let b=document.querySelector("#annBody");b.innerHTML="";
+ state.samples.forEach((s,i)=>{if(!complete(s))return;let vals=[`AM${String(i+1).padStart(3,"0")}`,s.endereco,s.municipio,s.uf,s.fonte,s.data,fmtCoord(s.lat),fmtCoord(s.lon),s.area,s.valor,vu(s),...vars.map(v=>s.vars[v.id]??"")];
+ let tr=document.createElement("tr");tr.innerHTML=vals.map(v=>`<td>${esc(v)}</td>`).join("");b.appendChild(tr)});
+ let ini=state.samples.filter(started).length, comp=state.samples.filter(complete).length, pend=ini-comp;
+ document.querySelector("#annCount").textContent=comp;
+ document.querySelector("#annVars").textContent=vars.length;
+ document.querySelector("#annPend").textContent=pend;
+ document.querySelector("#annPdf").textContent=(comp>0&&pend===0)?"LIBERADO":"BLOQUEADO";
+}
+document.querySelector("#addVar").onclick=()=>{
+ if(state.vars.length>=8)return alert("Limite de 8 variáveis.");
+ if(hasStartedSamples() && !confirm("Já existem amostras iniciadas. Adicionar uma nova variável tornará essas amostras incompletas até que o novo campo seja preenchido. Deseja continuar?"))return;
+ state.vars.push({id:uid(),name:"",type:"Quantitativa",transform:"",subject:"",impact:"",desc:"",classes:[]});
+ renderVars();renderSamples();renderAnnex();updateMethodGate();
+};
+
+let sampleImport={headers:[],rows:[]};
+const fixedAliases={
+ endereco:["endereco","endereço","endereco identificacao","endereço identificação","logradouro"],
+ municipio:["municipio","município","cidade"],
+ uf:["uf","estado"],
+ fonte:["fonte"],
+ data:["data","data pesquisa","data da pesquisa"],
+ lat:["latitude","lat"],
+ lon:["longitude","lon","long"],
+ area:["area","área","area m2","área m2","area privativa","área privativa"],
+ valor:["valor total","valor","valor total r$","preco","preço"]
+};
+function normHeader(s){return String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();}
+function autoHeaderFor(field,label,headers){
+ const targets=[normHeader(label),...(fixedAliases[field]||[]).map(normHeader)];
+ let exact=headers.find(h=>targets.includes(normHeader(h)));
+ if(exact)return exact;
+ // Variáveis: somente nome exatamente igual após normalização.
+ if(field.startsWith("var:")){
+   const vn=normHeader(label);
+   return headers.find(h=>normHeader(h)===vn)||"";
+ }
+ return "";
+}
+function importTargets(){
+ return [
+  ...fixed.map(([k,l])=>({key:k,label:l,type:"fixed"})),
+  ...state.vars.filter(v=>v.name.trim()).map(v=>({key:"var:"+v.id,label:v.name,type:"var"}))
+ ];
+}
+function renderSampleMapping(){
+ const body=document.querySelector("#sampleMapBody"),targets=importTargets(),hs=sampleImport.headers;
+ body.innerHTML=targets.map(t=>{
+   let auto=autoHeaderFor(t.key,t.label,hs);
+   let preview=auto?sampleImport.rows.slice(0,3).map(r=>r[auto]).filter(v=>v!==undefined&&v!=="").join(" | "):"";
+   return `<tr><td><b>${esc(t.label)}</b></td><td><select data-map-target="${esc(t.key)}"><option value="">Ignorar</option>${hs.map(h=>`<option value="${esc(h)}" ${h===auto?"selected":""}>${esc(h)}</option>`).join("")}</select></td><td data-preview="${esc(t.key)}">${esc(preview)}</td></tr>`;
+ }).join("");
+ body.querySelectorAll("[data-map-target]").forEach(sel=>sel.onchange=()=>{
+   const p=body.querySelector(`[data-preview="${CSS.escape(sel.dataset.mapTarget)}"]`);
+   if(p)p.textContent=sel.value?sampleImport.rows.slice(0,3).map(r=>r[sel.value]).filter(v=>v!==undefined&&v!=="").join(" | "):"";
+ });
+}
+document.querySelector("#importSamples").onclick=()=>{
+ if(!methodReady())return alert("Conclua a Metodologia antes de importar amostras.");
+ document.querySelector("#fileSamples").click();
+};
+document.querySelector("#fileSamples").onchange=async e=>{
+ const f=e.target.files?.[0]; if(!f)return;
+ try{
+   if(!window.XLSX)throw new Error("O módulo de leitura de planilhas não foi carregado.");
+   const data=await f.arrayBuffer(),wb=XLSX.read(data,{type:"array",cellDates:true});
+   const ws=wb.Sheets[wb.SheetNames[0]];
+   const rows=XLSX.utils.sheet_to_json(ws,{defval:"",raw:false});
+   if(!rows.length)throw new Error("A primeira planilha não possui linhas de dados.");
+   sampleImport={headers:Object.keys(rows[0]),rows};
+   document.querySelector("#sampleImportInfo").textContent=`Arquivo: ${f.name} | ${rows.length} linha(s) encontrada(s).`;
+   renderSampleMapping();document.querySelector("#sampleImportPanel").classList.remove("hidden");
+ }catch(err){alert("Não foi possível ler o arquivo.\n\n"+(err?.message||err));}
+ e.target.value="";
+};
+document.querySelector("#cancelSampleImport").onclick=()=>document.querySelector("#sampleImportPanel").classList.add("hidden");
+document.querySelector("#confirmSampleImport").onclick=()=>{
+ const maps={};
+ document.querySelectorAll("[data-map-target]").forEach(s=>{if(s.value)maps[s.dataset.mapTarget]=s.value});
+ if(!Object.keys(maps).length)return alert("Associe pelo menos uma coluna antes de importar.");
+ const imported=sampleImport.rows.map(r=>{
+   let s=blankSample();
+   Object.entries(maps).forEach(([target,col])=>{
+     let val=r[col]??"";
+     if(target.startsWith("var:"))s.vars[target.slice(4)]=String(val).trim();
+     else if(target==="data"){
+       let txt=String(val).trim(),m=txt.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+       s.data=m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:txt;
+     } else s[target]=String(val).trim();
+   });
+   return s;
+ });
+ state.samples.push(...imported);
+ document.querySelector("#sampleImportPanel").classList.add("hidden");
+ renderSamples();renderAnnex();updateReview();
+ alert(`${imported.length} amostra(s) importada(s). Somente os campos associados foram preenchidos; os demais permanecem disponíveis para complemento manual.`);
+};
+
+document.querySelector("#addSample").onclick=()=>{if(!methodReady())return alert("Conclua a Metodologia antes de adicionar amostras.");state.samples.push(blankSample());renderSamples()};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+ if(b.dataset.tab==="amos" && !methodReady()){
+   alert("A guia AMOSTRAS está bloqueada. Conclua todos os campos das variáveis na METODOLOGIA.");
+   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+   document.querySelector('[data-tab="met"]').classList.add("active");
+   document.querySelectorAll(".tabpane").forEach(x=>x.classList.add("hidden"));
+   document.querySelector("#met").classList.remove("hidden");
+   updateMethodGate(); return;
+ }
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ document.querySelectorAll(".tabpane").forEach(x=>x.classList.add("hidden"));
+ document.querySelector("#"+b.dataset.tab).classList.remove("hidden");
+ renderAnnex();updateMethodGate();updateTabStatus();bindForms();
+});
+function projectBlob(){
+ state.meta.updated=new Date().toISOString();
+ return new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+}
+function saveEvaluation(){
+ let a=document.createElement("a"),os=String(state.inicio?.os||"avaliacao").replace(/[^\w-]+/g,"_");
+ a.href=URL.createObjectURL(projectBlob());a.download=`${os}.avaliacao`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function loadEvaluationFile(f){
+ if(!f)return;let r=new FileReader();r.onload=()=>{try{
+   let o=JSON.parse(r.result);
+   state.version=o.version||"legado";state.meta=o.meta||{created:new Date().toISOString(),updated:new Date().toISOString()};state.meta.sourceVersion=state.version;
+   state.inicio=o.inicio||{};state.local=o.local||{};state.carac=o.carac||{};state.metodados=o.metodados||{};state.resultado=o.resultado||{};state.diag=o.diag||{};state.observacoes=o.observacoes||{};state.docs=o.docs||{};state.encerramento=o.encerramento||{};
+   state.vars=o.vars||[];state.vars.forEach(v=>{if(!Array.isArray(v.classes))v.classes=[]});
+   state.samples=o.samples||[];
+   renderVars();renderSamples();renderAnnex();updateMethodGate();bindForms();bindDocAttachmentStatus();updateTabStatus();
+ }catch(err){alert("Arquivo de avaliação inválido.")}};r.readAsText(f);
+}
+document.querySelector("#saveProject").onclick=saveEvaluation;
+document.querySelector("#openProject").onclick=()=>document.querySelector("#fileProject").click();
+document.querySelector("#fileProject").onchange=e=>loadEvaluationFile(e.target.files[0]);
+
+function xmlEsc(v){
+ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function colName(n){let s="";while(n){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26)}return s}
+function sheetXml(rows){
+ let body=rows.map((r,ri)=>`<row r="${ri+1}">`+r.map((v,ci)=>{
+   let ref=colName(ci+1)+(ri+1);
+   if(typeof v==="number" && Number.isFinite(v))return `<c r="${ref}"><v>${v}</v></c>`;
+   return `<c r="${ref}" t="inlineStr"><is><t>${xmlEsc(v)}</t></is></c>`;
+ }).join("")+"</row>").join("");
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+ <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${body}</sheetData></worksheet>`;
+}
+function crc32(bytes){
+ let table=crc32.table||(crc32.table=(()=>{let t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})());
+ let c=0xFFFFFFFF;for(let b of bytes)c=table[(c^b)&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;
+}
+function u16(n){return [n&255,(n>>>8)&255]}
+function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function zipStore(files){
+ const enc=new TextEncoder(), parts=[], central=[]; let offset=0;
+ files.forEach(f=>{
+   let name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+   let local=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+     ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name]);
+   parts.push(local,data);
+   let cen=new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+     ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...name]);
+   central.push(cen); offset+=local.length+data.length;
+ });
+ let centralSize=central.reduce((a,b)=>a+b.length,0),centralOffset=offset;
+ let end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),
+   ...u32(centralSize),...u32(centralOffset),...u16(0)]);
+ return new Blob([...parts,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+function buildXlsx(){
+ let vars=state.vars.filter(v=>v.name.trim());
+ let metodologia=[["Ordem","Nome","Tipo","Transformação","Descrição","Valor do avaliando"]];
+ vars.forEach((v,i)=>metodologia.push([i+1,v.name,v.type,v.transform||"",v.desc||"",v.subject||""]));
+
+ let classificacoes=[["Variável","Código","Descrição"]];
+ vars.filter(v=>v.type==="Qualitativa").forEach(v=>(v.classes||[]).forEach(c=>{
+   if(String(c.code||"").trim()||String(c.label||"").trim())classificacoes.push([v.name,c.code,c.label]);
+ }));
+
+ let amostras=[["ID","Endereço / identificação","Município","UF","Fonte","Data pesquisa","Latitude","Longitude","Área (m²)","Valor total (R$)","VU (R$/m²)",...vars.map(v=>v.name)]];
+ state.samples.forEach((s,i)=>{
+   if(!complete(s))return;
+   amostras.push(["AM"+String(i+1).padStart(3,"0"),s.endereco,s.municipio,s.uf,s.fonte,s.data,
+     num(s.lat),num(s.lon),num(s.area),num(s.valor),Number(vu(s)),...vars.map(v=>num(s.vars[v.id]))]);
+ });
+
+ let files=[
+ {name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`},
+ {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+ {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="METODOLOGIA" sheetId="1" r:id="rId1"/><sheet name="CLASSIFICACOES" sheetId="2" r:id="rId2"/><sheet name="AMOSTRAS" sheetId="3" r:id="rId3"/></sheets></workbook>`},
+ {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/></Relationships>`},
+ {name:"xl/worksheets/sheet1.xml",data:sheetXml(metodologia)},
+ {name:"xl/worksheets/sheet2.xml",data:sheetXml(classificacoes)},
+ {name:"xl/worksheets/sheet3.xml",data:sheetXml(amostras)}
+ ];
+ return zipStore(files);
+}
+document.querySelector("#exportXlsx").onclick=()=>{
+ let ini=state.samples.filter(started).length,comp=state.samples.filter(complete).length,pend=ini-comp;
+ if(!methodReady())return alert("Conclua a Metodologia antes de gerar o XLSX.");
+ if(pend>0)return alert(`XLSX BLOQUEADO: existem ${pend} amostra(s) incompleta(s).`);
+ if(comp===0)return alert("XLSX BLOQUEADO: não existe nenhuma amostra completa.");
+ let blob=buildXlsx(),a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download="dados_avaliacao.xlsx";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+document.querySelector("#exportData").onclick=()=>{
+ const vars=state.vars.filter(v=>v.name.trim()).map((v,i)=>({
+   ordem:i+1,nome:v.name,tipo:v.type,transformacao:v.transform||"",
+   descricao:v.desc||"",valor_avaliando:v.subject||"",
+   classificacoes:(v.classes||[]).filter(c=>String(c.code).trim()!=="").map(c=>({codigo:c.code,descricao:c.label}))
+ }));
+ const amostras=[];
+ state.samples.forEach((s,i)=>{
+   if(!complete(s))return;
+   const vv={};
+   state.vars.filter(v=>v.name.trim()).forEach(v=>{
+     const codigo=s.vars[v.id]??"";
+     let significado="";
+     if(v.type==="Qualitativa"){
+       const c=(v.classes||[]).find(c=>String(c.code)===String(codigo));
+       if(c)significado=c.label;
+     }
+     vv[v.name]={valor:codigo,significado};
+   });
+   amostras.push({
+     id:"AM"+String(i+1).padStart(3,"0"),
+     endereco:s.endereco,municipio:s.municipio,uf:s.uf,fonte:s.fonte,
+     data_pesquisa:s.data,latitude:num(s.lat),longitude:num(s.lon),
+     area_m2:num(s.area),valor_total:num(s.valor),vu_m2:Number(vu(s)),
+     variaveis:vv
+   });
+ });
+ const pacote={
+   formato:"POC_LAUDO_AVALIACAO",
+   versao:"0.5",
+   exportado_em:new Date().toISOString(),
+   metodologia:{variaveis:vars},
+   amostras
+ };
+ const blob=new Blob([JSON.stringify(pacote,null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download="dados_estruturados_avaliacao.json";a.click();URL.revokeObjectURL(a.href);
+};
+
+function pdfSafe(s){
+ return String(s??"").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)")
+   .replace(/[^\x20-\x7EÀ-ÿ]/g," ");
+}
+function win1252Bytes(s){
+ const map={8364:128,8218:130,402:131,8222:132,8230:133,8224:134,8225:135,710:136,8240:137,352:138,8249:139,338:140,381:142,8216:145,8217:146,8220:147,8221:148,8226:149,8211:150,8212:151,732:152,8482:153,353:154,8250:155,339:156,382:158,376:159};
+ let a=[]; for(let ch of s){let c=ch.codePointAt(0); if(c<=255)a.push(c); else if(map[c]!=null)a.push(map[c]); else a.push(32)} return new Uint8Array(a);
+}
+function pdfText(x,y,size,text,bold=false){
+ return `BT /${bold?"F2":"F1"} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${pdfSafe(text)}) Tj ET\n`;
+}
+function fitText(text,width,size){
+ let max=Math.max(1,Math.floor(width/(size*0.52)));
+ text=String(text??""); return text.length<=max?text:text.slice(0,Math.max(1,max-1))+"…";
+}
+function brDate(v){
+ if(!v)return "";
+ let p=String(v).split("-");
+ return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(v);
+}
+function brNum(v,dec=2){
+ let n=num(v); if(!Number.isFinite(n))return "";
+ return n.toLocaleString("pt-BR",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function brMoney(v){
+ let n=num(v); if(!Number.isFinite(n))return "";
+ return "R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function buildAnnexPdf(){
+ const vars=state.vars.filter(v=>v.name.trim());
+ const completeRows=state.samples.map((s,i)=>({s,i})).filter(x=>complete(x.s));
+ const W=842,H=595,ml=22,mr=22,top=46,bottom=28,rowH=18,headH=30,usable=W-ml-mr;
+
+ // Estratégia adaptativa: até 4 variáveis em um bloco; acima disso, divide horizontalmente.
+ const maxVarsPerBlock=4;
+ const blocks=[];
+ if(vars.length===0)blocks.push([]);
+ else for(let i=0;i<vars.length;i+=maxVarsPerBlock)blocks.push(vars.slice(i,i+maxVarsPerBlock));
+
+ // Identificação essencial repetida em todos os blocos.
+ const fixedHeaders=["ID","Endereço / identificação","Município","UF","Fonte","Data pesquisa","Latitude","Longitude","Área (m²)","Valor total (R$)","VU (R$/m²)"];
+
+ const perPage=Math.max(1,Math.floor((H-top-bottom-headH-20)/rowH));
+ const verticalPages=Math.max(1,Math.ceil(completeRows.length/perPage));
+ const totalPages=verticalPages*blocks.length;
+ const pages=[];
+ let pageNo=0;
+
+ blocks.forEach((block,bi)=>{
+   for(let vp=0;vp<verticalPages;vp++){
+     pageNo++;
+     const chunk=completeRows.slice(vp*perPage,(vp+1)*perPage);
+     const headers=[...fixedHeaders,...block.map(v=>v.name)];
+
+     // Pesos desenhados para preservar legibilidade dos campos fixos.
+     let fixedWeights=[0.055,0.155,0.105,0.038,0.085,0.078,0.078,0.078,0.062,0.105,0.075];
+     let fixedSum=fixedWeights.reduce((a,b)=>a+b,0);
+     // Reserva 25% para variáveis quando elas existem.
+     let varShare=block.length?0.25:0;
+     let fixedTarget=1-varShare;
+     let widths=fixedWeights.map(w=>w/fixedSum*fixedTarget*usable);
+     if(block.length)widths.push(...Array(block.length).fill(varShare*usable/block.length));
+
+     let c="";
+     c+=pdfText(ml,H-25,12,"ANEXO I – DADOS AMOSTRAIS",true);
+     c+=pdfText(W-128,H-25,8,`Página ${pageNo} de ${totalPages}`);
+     if(blocks.length>1)c+=pdfText(ml,H-38,7.2,`Variáveis ${bi*maxVarsPerBlock+1} a ${bi*maxVarsPerBlock+block.length} de ${vars.length}`);
+
+     let y=H-top-headH,x=ml;
+     c+="0.92 g\n";
+     for(let j=0;j<headers.length;j++){c+=`${x.toFixed(2)} ${y.toFixed(2)} ${widths[j].toFixed(2)} ${headH} re f\n`;x+=widths[j]}
+     c+="0 g\n";x=ml;
+     for(let j=0;j<headers.length;j++){
+       // Cabeçalho em até duas linhas simples, evitando abreviação agressiva.
+       let text=String(headers[j]), fs=5.8, max=Math.max(2,Math.floor((widths[j]-4)/(fs*0.52)));
+       if(text.length<=max){
+         c+=pdfText(x+2,y+11,fs,text,true);
+       }else{
+         let cut=text.lastIndexOf(" ",max);
+         if(cut<Math.floor(max*0.45))cut=max;
+         let l1=text.slice(0,cut).trim(),l2=text.slice(cut).trim();
+         c+=pdfText(x+2,y+17,fs,fitText(l1,widths[j]-4,fs),true);
+         c+=pdfText(x+2,y+7,fs,fitText(l2,widths[j]-4,fs),true);
+       }
+       x+=widths[j];
+     }
+
+     c+="0.75 G 0.35 w\n";
+     chunk.forEach(({s,i},ri)=>{
+       const r=[
+         "AM"+String(i+1).padStart(3,"0"),s.endereco,s.municipio,s.uf,s.fonte,brDate(s.data),
+         fmtCoord(s.lat),fmtCoord(s.lon),brNum(s.area,2),brMoney(s.valor),brMoney(vu(s)),
+         ...block.map(v=>String(s.vars[v.id]??""))
+       ];
+       let yy=y-(ri+1)*rowH;x=ml;
+       for(let j=0;j<headers.length;j++){
+         c+=`${x.toFixed(2)} ${yy.toFixed(2)} ${widths[j].toFixed(2)} ${rowH} re S\n`;
+         c+=pdfText(x+2,yy+6,5.6,fitText(r[j],widths[j]-4,5.6));
+         x+=widths[j];
+       }
+     });
+     pages.push(c);
+   }
+ });
+
+ let objects=[null];
+ objects.push("<< /Type /Catalog /Pages 2 0 R >>");
+ objects.push("");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+ let pageIds=[];
+ pages.forEach(content=>{
+   let contentId=objects.length,b=win1252Bytes(content);
+   objects.push({stream:b});
+   let pageId=objects.length;
+   objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`);
+   pageIds.push(pageId);
+ });
+ objects[2]=`<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`;
+
+ let chunks=[win1252Bytes("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")],offsets=[0],pos=chunks[0].length;
+ for(let i=1;i<objects.length;i++){
+   offsets[i]=pos;
+   let pre=win1252Bytes(`${i} 0 obj\n`),body;
+   if(objects[i]&&objects[i].stream){
+     let s=objects[i].stream;
+     body=new Uint8Array([...win1252Bytes(`<< /Length ${s.length} >>\nstream\n`),...s,...win1252Bytes("\nendstream")]);
+   }else body=win1252Bytes(objects[i]);
+   let post=win1252Bytes("\nendobj\n");
+   chunks.push(pre,body,post);pos+=pre.length+body.length+post.length;
+ }
+ let xref=pos,xs=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+ for(let i=1;i<objects.length;i++)xs+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+ xs+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+ chunks.push(win1252Bytes(xs));
+ return new Blob(chunks,{type:"application/pdf"});
+}
+document.querySelector("#pdfCheck").onclick=()=>{
+ let iniciadas=state.samples.map((s,i)=>({s,i})).filter(x=>started(x.s));
+ let incompletas=iniciadas.filter(x=>!complete(x.s));
+ let comp=iniciadas.length-incompletas.length,m=document.querySelector("#pdfMsg");
+ if(!methodReady()){m.textContent="PDF BLOQUEADO: conclua a Metodologia.";return;}
+ if(incompletas.length){
+   let ids=incompletas.map(x=>"AM"+String(x.i+1).padStart(3,"0")).join(", ");
+   m.textContent=`PDF BLOQUEADO: existem ${incompletas.length} amostra(s) incompleta(s): ${ids}.`;return;
+ }
+ if(comp===0){m.textContent="PDF BLOQUEADO: não existe nenhuma amostra completa.";return;}
+ let blob=buildAnnexPdf(),a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download="Anexo_I_Dados_Amostrais.pdf";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ m.textContent=`PDF GERADO: ${comp} amostra(s) completa(s) e ${state.vars.filter(v=>v.name.trim()).length} variável(is).`;
+};
+document.querySelector("#exportCsv").onclick=()=>{let vars=state.vars.filter(v=>v.name.trim()),rows=[["ID",...fixed.map(x=>x[1]),"VU (R$/m²)",...vars.map(v=>v.name)]];state.samples.forEach((s,i)=>{if(complete(s))rows.push([`AM${String(i+1).padStart(3,"0")}`,s.endereco,s.municipio,s.uf,s.fonte,s.data,fmtCoord(s.lat),fmtCoord(s.lon),s.area,s.valor,vu(s),...vars.map(v=>s.vars[v.id]??"")])});let csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(";")).join("\n");let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="dados_amostrais.csv";a.click();URL.revokeObjectURL(a.href)};
+state.vars=[
+{id:uid(),name:"Renda IBGE",type:"Quantitativa",transform:"",subject:"",desc:"",classes:[]},
+{id:uid(),name:"Padrão de Acabamento",type:"Qualitativa",transform:"",subject:"",desc:"",classes:[
+{id:uid(),code:"1",label:"Baixo"},{id:uid(),code:"2",label:"Médio"},{id:uid(),code:"3",label:"Alto"}
+]}
+];
+
+
+
+function reportLine(label,value,x,y,w=500){
+ let v=String(value??"").trim(); if(!v)v="—";
+ return pdfText(x,y,8.3,`${label}: ${fitText(v,w,8.3)}`);
+}
+function boxTitle(x,y,w,title){
+ return `0.93 g\n${x} ${y-4} ${w} 22 re f\n0 g\n`+pdfText(x+8,y+3,9,title,true);
+}
+function footer(pageW,pageNo,total,laudo){
+ let c="0.82 G 0.4 w\n"+`42 30 ${pageW-84} 0 re S\n`;
+ c+=pdfText(42,17,6.8,`Laudo nº ${pdfSafe(laudo||"—")}`);
+ c+=pdfText(pageW-125,17,6.8,`Página ${pageNo} de ${total}`);
+ return c;
+}
+
+function pdfSectionTitle(x,y,w,n,title){
+ return `0.13 0.32 0.50 rg\n${x} ${y-5} ${w} 24 re f\n1 1 1 rg\n`+
+        pdfText(x+7,y+2,9.4,`${n}. ${title}`,true)+`0 0 0 rg\n`;
+}
+function pdfPair(c,x,y,label1,val1,label2,val2,colW=250){
+ c+=pdfText(x,y,8.1,label1,true); c+=pdfText(x+110,y,8.1,fitText(String(val1||"—"),colW-115,8.1));
+ if(label2){c+=pdfText(x+colW,y,8.1,label2,true);c+=pdfText(x+colW+110,y,8.1,fitText(String(val2||"—"),colW-115,8.1));}
+ return c;
+}
+function yesNoImpact(exists,impact){
+ let a=String(exists||"").trim(),b=String(impact||"").trim();
+ return [a,b].filter(Boolean).join(" - ")||"—";
+}
+function buildCompleteReportPdf(){
+ const PW=595,PH=842,ml=36,mr=36,bottom=42,W=PW-ml-mr;
+ const vars=state.vars.filter(v=>v.name.trim());
+ const reportPages=[];
+ let c="",y=PH-42;
+
+ function header(sub=""){
+   let z="";
+   z+=pdfText(ml,PH-38,15,"LAUDO DE AVALIAÇÃO",true);
+   if(sub)z+=pdfText(ml,PH-53,8.2,sub,true);
+   z+="0.72 G 0.6 w\n"+`${ml} ${PH-61} ${W} 0 re S\n`;
+   return z;
+ }
+ function line(label,val,yy,x=ml,max=W){
+   let h=18,labelW=145;
+   let z="0.80 G 0.35 w\n"+`${x} ${yy-6} ${max} ${h} re S\n`+`${x+labelW} ${yy-6} 0 ${h} re S\n`;
+   z+="0.96 g\n"+`${x} ${yy-6} ${labelW} ${h} re f\n0 g\n`;
+   z+=pdfText(x+6,yy,7.4,label,true)+pdfText(x+labelW+6,yy,7.5,fitText(String(val??"").trim()||"—",max-labelW-12,7.5));
+   return z;
+ }
+ function pair(l1,v1,l2,v2,yy){
+   let h=18,col=W/2,labelW=102,x1=ml,x2=ml+col;
+   let z="0.80 G 0.35 w\n";
+   [x1,x2].forEach(x=>{z+=`${x} ${yy-6} ${col} ${h} re S\n`;z+=`${x+labelW} ${yy-6} 0 ${h} re S\n`;});
+   z+="0.96 g\n"+`${x1} ${yy-6} ${labelW} ${h} re f\n`+`${x2} ${yy-6} ${labelW} ${h} re f\n0 g\n`;
+   z+=pdfText(x1+6,yy,7.2,l1,true)+pdfText(x1+labelW+5,yy,7.3,fitText(String(v1??"").trim()||"—",col-labelW-10,7.3));
+   z+=pdfText(x2+6,yy,7.2,l2,true)+pdfText(x2+labelW+5,yy,7.3,fitText(String(v2??"").trim()||"—",col-labelW-10,7.3));
+   return z;
+ }
+ function resultHighlight(label,val,yy){
+   let h=27,labelW=170;
+   let z="0.13 0.32 0.50 rg\n"+`${ml} ${yy-8} ${W} ${h} re f\n`;
+   z+="1 1 1 rg\n"+pdfText(ml+8,yy,8.2,label,true);
+   z+=pdfText(ml+labelW,yy,10.5,fitText(String(val??"").trim()||"—",W-labelW-12,10.5),true);
+   z+="0 0 0 rg\n";
+   return z;
+ }
+ function marketValueHighlight(label,val,yy){
+   let h=27,labelW=170;
+   // Azul claro para diferenciar o resultado final dos títulos de seção.
+   let z="0.82 0.90 0.96 rg\n"+`${ml} ${yy-8} ${W} ${h} re f\n`;
+   z+="0.08 0.25 0.40 rg\n"+pdfText(ml+8,yy,8.2,label,true);
+   z+=pdfText(ml+labelW,yy,10.5,fitText(String(val??"").trim()||"—",W-labelW-12,10.5),true);
+   z+="0 0 0 rg\n";
+   return z;
+ }
+ function signatureBox(yy){
+   let h=58,half=W/2;
+   let z="0.75 G 0.5 w\n"+`${ml} ${yy-h} ${W} ${h} re S\n`+`${ml+half} ${yy-h} 0 ${h} re S\n`;
+   z+=pdfText(ml+8,yy-16,7.2,"Empresa / Representante",true);
+   z+=pdfText(ml+8,yy-31,7.3,fitText([state.encerramento?.empresa,state.encerramento?.representante].filter(Boolean).join(" - ")||"—",half-16,7.3));
+   z+=pdfText(ml+half+8,yy-16,7.2,"Responsável técnico",true);
+   z+=pdfText(ml+half+8,yy-31,7.3,fitText([state.encerramento?.responsavel,state.encerramento?.crea].filter(Boolean).join(" - ")||"—",half-16,7.3));
+   return z;
+ }
+ function section(n,title){
+   if(y<bottom+72)pushPage();
+   c+=pdfSectionTitle(ml,y,W,n,title); y-=28;
+ }
+ function pushPage(){reportPages.push({content:c,W:PW,H:PH});c=header(`Laudo nº ${state.inicio.numeroLaudo||"—"}`);y=PH-82;}
+
+ // PAGE 1 - Identificação
+ c=header(`Laudo nº ${state.inicio.numeroLaudo||"—"}`); y=PH-82;
+ section("1","Identificação da avaliação");
+ c+=pair("Nº da OS",state.inicio.os,"Nº do laudo",state.inicio.numeroLaudo,y);y-=19;
+ c+=pair("Data da vistoria",brDate(state.inicio.dataVistoria),"Data-base",brDate(state.inicio.dataBase),y);y-=19;
+ c+=pair("Objetivo",state.inicio.objetivo,"Finalidade",state.inicio.finalidade,y);y-=19;
+ c+=pair("Tipo do imóvel",state.inicio.tipologia,"Uso atual",state.inicio.uso,y);y-=19;
+ c+=pair("Condição da vistoria",state.inicio.condicaoVistoria,"Acesso ao interior",state.inicio.acessoInterior,y);y-=28;
+
+ section("2","Identificação do imóvel");
+ c+=line("Proprietário",state.inicio.proprietario,y);y-=19;
+ c+=line("Endereço",[state.inicio.endereco,state.inicio.numeroComplemento].filter(Boolean).join(" - "),y);y-=19;
+ c+=line("Condomínio / empreendimento",state.inicio.condominio,y);y-=19;
+ c+=pair("Bairro",state.inicio.bairro,"Município / UF",[state.inicio.municipio,state.inicio.uf].filter(Boolean).join(" / "),y);y-=19;
+ c+=pair("CEP",state.inicio.cep,"Matrícula",state.inicio.matricula,y);y-=19;
+ c+=line("Cartório",state.inicio.cartorio,y);y-=19;
+ c+=pair("Latitude",state.inicio.latitude,"Longitude",state.inicio.longitude,y);y-=24;
+
+ section("3","Localização e microrregião");
+ c+=pair("Uso predominante",state.local.usoPred,"Ocupação da região",state.local.ocupacao,y);y-=18;
+ c+=pair("Padrão predominante",state.local.padrao,"Densidade",state.local.densidade,y);y-=18;
+ c+=pair("Acesso viário",state.local.acessoViario,"Transporte público",state.local.transportePublico,y);y-=18;
+ c+=pair("Estacionamento",state.local.estacionamento,"Vias principais",state.local.viasPrincipais,y);y-=18;
+ c+=pair("Acesso a rodovias",state.local.rodovias,"Transporte sobre trilhos",state.local.trilhos,y);y-=18;
+ c+=line("Observação sobre a região",state.local.obsRegiao,y);y-=19;
+ reportPages.push({content:c,W:PW,H:PH});
+
+ // PAGE 2 - Localização (infra) + caracterização
+ c=header(`Laudo nº ${state.inicio.numeroLaudo||"—"}`);y=PH-82;
+ section("3.1","Infraestrutura e equipamentos");
+ [
+ ["Água",state.local.agua,"Esgoto",state.local.esgoto],
+ ["Energia",state.local.energia,"Iluminação pública",state.local.iluminacao],
+ ["Pavimentação",state.local.pavimentacao,"Drenagem",state.local.drenagem],
+ ["Telefonia / dados",state.local.dados,"Gás canalizado",state.local.gas]
+ ].forEach(r=>{c+=pair(...r,y);y-=20});
+ y-=5;
+ [
+ ["Comércio / serviços",yesNoImpact(state.local.comercioExiste,state.local.comercioObs)],
+ ["Escolas",yesNoImpact(state.local.escolasExiste,state.local.escolasObs)],
+ ["Saúde",yesNoImpact(state.local.saudeExiste,state.local.saudeObs)],
+ ["Parques / lazer",yesNoImpact(state.local.lazerExiste,state.local.lazerObs)],
+ ["Shopping",yesNoImpact(state.local.shoppingExiste,state.local.shoppingObs)],
+ ["Metrô / trem",yesNoImpact(state.local.metroExiste,state.local.metroObs)],
+ ["Ocupação irregular",yesNoImpact(state.local.irregularExiste,state.local.irregularObs)],
+ ["Outro",yesNoImpact(state.local.outroExiste,state.local.outroObs)]
+ ].forEach(r=>{c+=line(r[0],r[1],y);y-=18});
+ y-=12;
+ section("4","Caracterização do imóvel");
+ c+=pair("Área da matrícula (m²)",state.carac.areaMatricula,"Área não averbada (m²)",state.carac.naoAverbada,y);y-=18;
+ c+=pair("Área adotada (m²)",state.carac.areaAdotada,"Andar / pavimento",state.carac.andar,y);y-=18;
+ c+=pair("Dormitórios",state.carac.dormitorios,"Suítes",state.carac.suites,y);y-=18;
+ c+=pair("Banheiros",state.carac.banheiros,"Vagas",state.carac.vagas,y);y-=18;
+ c+=line("Lazer / infraestrutura",
+   [["Piscina",state.carac.piscina],["Academia",state.carac.academia],["Salão festas",state.carac.salaoFestas],
+    ["Churrasqueira",state.carac.churrasqueira],["Playground",state.carac.playground],["Quadra",state.carac.quadra],
+    ["Salão jogos",state.carac.salaoJogos],["Espaço gourmet",state.carac.gourmet]]
+   .filter(x=>x[1]).map(x=>x[0]+": "+x[1]).join(" | "),y);y-=19;
+ c+=line("Outro lazer",state.carac.outroLazer,y);y-=18;
+ c+=line("Regularização área não averbada",`${state.carac.impRegularizacao||"—"}${state.carac.motivoRegularizacao?" - "+state.carac.motivoRegularizacao:""}`,y);y-=18;
+ c+=line("Impedimento de acesso",`${state.carac.impAcesso||"—"}${state.carac.motivoAcesso?" - "+state.carac.motivoAcesso:""}`,y);y-=18;
+ c+=line("Documentação x vistoria",`${state.carac.docVistoria||"—"}${state.carac.divergencias?" - "+state.carac.divergencias:""}`,y);y-=18;
+ reportPages.push({content:c,W:PW,H:PH});
+
+ // PAGE 3+ - Metodologia
+ c=header(`Laudo nº ${state.inicio.numeroLaudo||"—"}`);y=PH-82;
+ section("5","Metodologia");
+ c+=line("Método",state.metodados.metodo,y);y-=19;
+ c+=pair("Total de dados",state.metodados.totalDados,"Dados utilizados",state.metodados.dadosUtilizados,y);y-=18;
+ c+=pair("Total de variáveis",state.metodados.totalVariaveis,"Variáveis utilizadas",state.metodados.variaveisUtilizadas,y);y-=18;
+ c+=line("Equação do modelo",state.metodados.equacao,y);y-=24;
+ c+=pair("R²",state.metodados.r2,"R² ajustado",state.metodados.r2aj,y);y-=24;
+ c+=pdfText(ml+8,y,8.5,"Resultados da inferência",true);y-=18;
+ c+=pair("VU estimado / central",state.metodados.vuCentral,"VU adotado",state.metodados.vuAdotado,y);y-=18;
+ c+=pair("Limite inferior",state.metodados.limInf,"Limite superior",state.metodados.limSup,y);y-=18;
+ c+=pair("Grau de fundamentação",state.metodados.grauFund,"Grau de precisão",state.metodados.grauPrecisao,y);y-=24;
+ c+=pdfText(ml+8,y,8.5,"Variáveis adotadas no modelo",true);y-=19;
+
+ vars.forEach((v,i)=>{
+   let need=(v.type==="Qualitativa"&&v.classes?.length)?100:82;
+   if(y<bottom+need){pushPage();c+=pdfText(ml+8,y,8.5,"Variáveis adotadas no modelo - continuação",true);y-=19;}
+   c+="0.95 g\n"+`${ml+6} ${y-5} ${W-12} 19 re f\n0 g\n`;
+   c+=pdfText(ml+12,y,8.2,`${i+1}. ${v.name}`,true);y-=21;
+   c+=pair("Tipo",v.type,"Transformação",v.transform,y);y-=18;
+   c+=pair("Valor do avaliando",v.subject,"Impacto sobre o modelo",v.impact,y);y-=18;
+   c+=line("Descrição",v.desc,y);y-=18;
+   if(v.type==="Qualitativa"&&v.classes?.length){
+     c+=line("Classificação",v.classes.map(x=>`${x.code} = ${x.label}`).join(" | "),y);y-=18;
+   }
+   y-=8;
+ });
+ reportPages.push({content:c,W:PW,H:PH});
+
+ // PAGE 4 - Diagnóstico, resultado, observações e encerramento
+ c=header(`Laudo nº ${state.inicio.numeroLaudo||"—"}`);y=PH-82;
+ section("6","Diagnóstico de mercado");
+ c+=pair("Desempenho",state.diag.desempenho,"Demanda",state.diag.demanda,y);y-=18;
+ c+=pair("Quantidade de ofertas",state.diag.ofertas,"Liquidez",state.diag.liquidez,y);y-=18;
+ c+=line("Prazo estimado de comercialização",state.diag.prazo,y);y-=18;
+ c+=line("Facilitadores",state.diag.facilitadores,y);y-=18;
+ c+=line("Dificultadores",state.diag.dificultadores,y);y-=18;
+ c+=line("Observações de mercado",state.diag.obs,y);y-=24;
+
+ section("7","Resultado da avaliação");
+ c+=pair("VU adotado (R$/m²)",state.resultado.vu,"Área adotada (m²)",state.resultado.areaAdotada,y);y-=18;
+ c+=pair("Valor calculado",brMoney(state.resultado.valorCalculado),"Valor arredondado",brMoney(state.resultado.valorArredondado),y);y-=18;
+ c+=line("Valor adotado",brMoney(state.resultado.vm),y);y-=26;
+ if(String(state.resultado.valorMercado||"").trim()){c+=marketValueHighlight("VALOR DE MERCADO",brMoney(state.resultado.valorMercado),y);y-=34}
+ if(String(state.resultado.vliMax||"").trim()){c+=pair("VLI Máximo",brMoney(state.resultado.vliMax),"Prazo Mínimo",state.resultado.prazoMin,y);y-=20}
+ if(String(state.resultado.vliMin||"").trim()){c+=pair("VLI Mínimo",brMoney(state.resultado.vliMin),"Prazo Máximo",state.resultado.prazoMax,y);y-=20}
+ if(String(state.resultado.valorLocacao||"").trim()){c+=pair("Valor de Locação",brMoney(state.resultado.valorLocacao),"Locação Máxima",brMoney(state.resultado.valorMaxLocacao),y);y-=20}
+ y-=10;
+ section("8","Observações gerais");
+ c+=line("Observações",state.observacoes?.gerais,y);y-=36;
+
+ section("9","Encerramento");
+ c+=pair("Local",state.encerramento?.local,"Data de emissão",brDate(state.encerramento?.dataEmissao),y);y-=18;
+ c+=pair("Representante legal",state.encerramento?.representante,"CPF",state.encerramento?.cpf,y);y-=22;
+ c+=signatureBox(y);y-=66;
+ reportPages.push({content:c,W:PW,H:PH});
+
+ // ANEXO I - mantém a tabela adaptativa aprovada
+ const annexPages=[];
+ const completeRows=state.samples.map((s,i)=>({s,i})).filter(x=>complete(x.s));
+ const AW=842,AH=595,aml=22,amr=22,atop=50,abottom=30,rowH=18,headH=30,usable=AW-aml-amr,maxVarsPerBlock=4;
+ const blocks=[];if(!vars.length)blocks.push([]);else for(let i=0;i<vars.length;i+=maxVarsPerBlock)blocks.push(vars.slice(i,i+maxVarsPerBlock));
+ const fixedHeaders=["ID","Endereço / identificação","Município","UF","Fonte","Data pesquisa","Latitude","Longitude","Área (m²)","Valor total (R$)","VU (R$/m²)"];
+ const perPage=Math.max(1,Math.floor((AH-atop-abottom-headH-20)/rowH)),verticalPages=Math.max(1,Math.ceil(completeRows.length/perPage));
+ blocks.forEach((block,bi)=>{
+  for(let vp=0;vp<verticalPages;vp++){
+   let ac="",chunk=completeRows.slice(vp*perPage,(vp+1)*perPage),headers=[...fixedHeaders,...block.map(v=>v.name)];
+   ac+="0.13 0.32 0.50 rg\n"+`${aml} ${AH-35} ${usable} 24 re f\n1 1 1 rg\n`;
+   ac+=pdfText(aml+7,AH-27,11,"ANEXO I - DADOS AMOSTRAIS",true);
+   ac+="0 0 0 rg\n";
+   ac+=pdfText(aml,AH-47,7.3,`Laudo nº ${state.inicio.numeroLaudo||"—"}`,true);
+   if(blocks.length>1)ac+=pdfText(250,AH-38,7,`Variáveis ${bi*maxVarsPerBlock+1} a ${bi*maxVarsPerBlock+block.length} de ${vars.length}`);
+   let fixedWeights=[.055,.155,.105,.038,.085,.078,.078,.078,.062,.105,.075],sum=fixedWeights.reduce((a,b)=>a+b,0),share=block.length?.25:0;
+   let widths=fixedWeights.map(w=>w/sum*(1-share)*usable);if(block.length)widths.push(...Array(block.length).fill(share*usable/block.length));
+   let ay=AH-atop-headH-9,ax=aml;ac+="0.13 0.32 0.50 rg\n";
+   for(let j=0;j<headers.length;j++){ac+=`${ax.toFixed(2)} ${ay.toFixed(2)} ${widths[j].toFixed(2)} ${headH} re f\n`;ax+=widths[j]}
+   ac+="1 1 1 rg\n";ax=aml;
+   for(let j=0;j<headers.length;j++){
+    let t=String(headers[j]),fs=5.8,max=Math.max(2,Math.floor((widths[j]-4)/(fs*.52)));
+    if(t.length<=max)ac+=pdfText(ax+2,ay+11,fs,t,true);
+    else{let cut=t.lastIndexOf(" ",max);if(cut<Math.floor(max*.45))cut=max;ac+=pdfText(ax+2,ay+17,fs,fitText(t.slice(0,cut).trim(),widths[j]-4,fs),true);ac+=pdfText(ax+2,ay+7,fs,fitText(t.slice(cut).trim(),widths[j]-4,fs),true)}
+    ax+=widths[j];
+   }
+   ac+="0 0 0 rg\n0.75 G 0.35 w\n";
+   chunk.forEach(({s,i},ri)=>{
+    let r=["AM"+String(i+1).padStart(3,"0"),s.endereco,s.municipio,s.uf,s.fonte,brDate(s.data),fmtCoord(s.lat),fmtCoord(s.lon),brNum(s.area,2),brMoney(s.valor),brMoney(vu(s)),...block.map(v=>String(s.vars[v.id]??""))];
+    let yy=ay-(ri+1)*rowH;ax=aml;
+    if(ri%2===1){ac+="0.97 g\n"+`${aml} ${yy} ${usable} ${rowH} re f\n0 g\n`;}
+    for(let j=0;j<headers.length;j++){ac+=`${ax.toFixed(2)} ${yy.toFixed(2)} ${widths[j].toFixed(2)} ${rowH} re S\n`;ac+=pdfText(ax+2,yy+6,5.6,fitText(r[j],widths[j]-4,5.6));ax+=widths[j]}
+   });
+   annexPages.push({content:ac,W:AW,H:AH});
+  }
+ });
+
+ const pages=[...reportPages,...annexPages],total=pages.length,laudo=state.inicio.numeroLaudo||"—";
+ pages.forEach((pg,i)=>{pg.content+=footer(pg.W,i+1,total,laudo)});
+
+ let objects=[null];objects.push("<< /Type /Catalog /Pages 2 0 R >>");objects.push("");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+ let pageIds=[];
+ pages.forEach(pg=>{let cid=objects.length,b=win1252Bytes(pg.content);objects.push({stream:b});let pid=objects.length;objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pg.W} ${pg.H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${cid} 0 R >>`);pageIds.push(pid)});
+ objects[2]=`<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`;
+ let chunks=[win1252Bytes("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")],offsets=[0],pos=chunks[0].length;
+ for(let i=1;i<objects.length;i++){offsets[i]=pos;let pre=win1252Bytes(`${i} 0 obj\n`),body;if(objects[i]&&objects[i].stream){let s=objects[i].stream;body=new Uint8Array([...win1252Bytes(`<< /Length ${s.length} >>\nstream\n`),...s,...win1252Bytes("\nendstream")])}else body=win1252Bytes(objects[i]);let post=win1252Bytes("\nendobj\n");chunks.push(pre,body,post);pos+=pre.length+body.length+post.length}
+ let xref=pos,xs=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;for(let i=1;i<objects.length;i++)xs+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+ xs+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;chunks.push(win1252Bytes(xs));
+ return new Blob(chunks,{type:"application/pdf"});
+}
+
+const docPdfFiles={};
+
+function syncDocFileControls(){
+ document.querySelectorAll("[data-doc-file]").forEach(inp=>{
+   const key=inp.dataset.docFile;
+   const sel=document.querySelector(`[data-form="docs"][data-key="${key}Status"]`);
+   const status=String(sel?.value ?? state.docs?.[key+"Status"] ?? "");
+   inp.disabled=status!=="Anexado";
+   if(status!=="Anexado" && docPdfFiles[key]){
+     delete docPdfFiles[key];
+     inp.value="";
+   }
+   const name=document.querySelector(`[data-doc-name="${key}"]`);
+   if(name)name.textContent=docPdfFiles[key]?.name || (status==="Anexado"?"Selecione o PDF":"Nenhum arquivo selecionado");
+ });
+}
+document.addEventListener("change",e=>{
+ if(e.target?.matches("[data-doc-file]")){
+   const key=e.target.dataset.docFile,file=e.target.files?.[0];
+   if(file)docPdfFiles[key]=file; else delete docPdfFiles[key];
+   syncDocFileControls();
+ }
+ if(e.target?.matches('[data-form="docs"][data-key$="Status"]')){
+   const k=e.target.dataset.key;
+   state.docs[k]=e.target.value;
+   syncDocFileControls();
+ }
+});
+
+function bindDocAttachmentStatus(){
+ document.querySelectorAll('[data-form="docs"][data-key$="Status"]').forEach(sel=>{
+   const apply=()=>{
+     const key=sel.dataset.key.replace(/Status$/,"");
+     const inp=document.querySelector(`[data-doc-file="${key}"]`);
+     const name=document.querySelector(`[data-doc-name="${key}"]`);
+     const enabled=sel.value==="Anexado";
+     if(inp){
+       inp.disabled=!enabled;
+       if(!enabled){
+         delete docPdfFiles[key];
+         inp.value="";
+       }
+     }
+     if(name)name.textContent=docPdfFiles[key]?.name || (enabled?"Selecione o PDF":"Nenhum arquivo selecionado");
+   };
+   sel.addEventListener("change",apply);
+   sel.addEventListener("input",apply);
+   apply();
+ });
+}
+async function consolidatePdf(mainBlob,extras){
+ if(!extras.length)return mainBlob;
+ if(!window.PDFLib)throw new Error("O módulo de consolidação de PDF não foi carregado. Verifique a conexão com a rede.");
+ const {PDFDocument}=window.PDFLib,finalDoc=await PDFDocument.create();
+ async function append(bytes,label){
+   let src;
+   try{src=await PDFDocument.load(bytes);}
+   catch(e){throw new Error(`Não foi possível abrir "${label}". O PDF pode estar protegido ou inválido.`);}
+   const pages=await finalDoc.copyPages(src,src.getPageIndices());
+   pages.forEach(p=>finalDoc.addPage(p));
+ }
+ await append(await mainBlob.arrayBuffer(),"Laudo");
+ for(const f of extras)await append(await f.arrayBuffer(),f.name);
+ return new Blob([await finalDoc.save()],{type:"application/pdf"});
+}
+async function generateCompleteReport(){
+ try{
+   updateReview();
+   const sts=tabStatuses();
+   const requiredTabs=["inicio","local","carac","met","amos","resultado","diag","docs"];
+   const canPdf=requiredTabs.every(k=>sts[k]==="complete");
+   if(!canPdf){alert("A geração do PDF está bloqueada. Conclua as pendências indicadas antes da emissão.");return;}
+   const orderedDocKeys=["matricula","fotoAvaliando","fotoAmostras","sisdea","mapa","art","vli","complementar"];
+   const missing=orderedDocKeys.filter(k=>state.docs?.[k+"Status"]==="Anexado"&&!docPdfFiles[k]);
+   if(missing.length){alert("Há anexos marcados como Anexado sem arquivo PDF selecionado. Inclua os arquivos antes da emissão.");return;}
+   const selected=orderedDocKeys.map(k=>docPdfFiles[k]).filter(Boolean);
+   let blob=buildCompleteReportPdf();
+   blob=await consolidatePdf(blob,selected);
+   let a=document.createElement("a"),laudo=String(state.inicio?.numeroLaudo||"avaliacao").replace(/[^\w-]+/g,"_");
+   a.href=URL.createObjectURL(blob);a.download=`Laudo_${laudo}.pdf`;a.click();
+   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ }catch(err){
+   alert("Não foi possível gerar o PDF consolidado.\n\n"+(err?.message||err));
+ }
+}
+
+document.querySelector("#saveFullTop").onclick=saveEvaluation;
+document.querySelector("#openFullTop").onclick=()=>document.querySelector("#fileFullTop").click();
+document.querySelector("#fileFullTop").onchange=e=>loadEvaluationFile(e.target.files[0]);
+document.querySelector("#emitXlsxTop").onclick=()=>document.querySelector("#exportXlsx").click();
+document.querySelector("#emitPdfTop").onclick=generateCompleteReport;
+renderVars();renderSamples();renderAnnex();updateMethodGate();bindForms();bindDocAttachmentStatus();updateTabStatus();
+updateTabStatus();
+</script>
+<script>
+window.addEventListener("load",()=>{
+  const missing=[];
+  if(!window.PDFLib) missing.push("consolidação de PDFs");
+  if(!window.XLSX) missing.push("importação XLSX/CSV");
+  if(missing.length){
+    const b=document.getElementById("webPilotBanner");
+    if(b){b.innerHTML="<strong>Versão piloto web 16.2</strong> — funções indisponíveis nesta rede: "+missing.join(" e ")+". As demais funções continuam locais no navegador.";b.style.background="#fff3cd";}
+  }
+});
+</script></body></html>
