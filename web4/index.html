@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Protótipo Web – Laudo de Avaliação</title>
+<style>
+:root{--azul:#1f4e78;--azul2:#d9eaf7;--borda:#c9d2dc;--bg:#f4f6f8;--erro:#fff0f0;--ok:#eef8ee}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#1f2933}
+header{background:var(--azul);color:#fff;padding:18px 28px} header h1{font-size:20px;margin:0}
+nav{display:flex;gap:8px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--borda);position:sticky;top:0;z-index:5}
+button{border:1px solid var(--azul);background:#fff;color:var(--azul);padding:8px 12px;border-radius:5px;cursor:pointer;font-weight:600}
+button.primary,.tab.active{background:var(--azul);color:#fff}.tab.locked{opacity:.45;cursor:not-allowed;background:#eef1f4;color:#66737f}
+.tab.status-empty:not(.active){background:#f4f5f6;color:#52606b}
+.tab.status-progress:not(.active){background:#fff2cc;color:#6b5300;border-color:#e2c45c}
+.tab.status-complete:not(.active){background:#dff2e1;color:#1f6328;border-color:#91c799}
+.tab.status-error:not(.active){background:#f9dddd;color:#8a1f1f;border-color:#dda0a0}.field-invalid{border-color:#b3261e!important;background:#fff0f0!important}.required-field{background:#fff9df!important;border-left:4px solid #d6a51f!important}.required-note{font-size:12px;color:#765c00;margin:4px 0 12px}.validation-error{color:#9b1c1c;font-weight:700}
+.emissionbar{margin:14px 0 0;padding:14px;background:#fff;border:1px solid var(--borda);border-radius:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.emissionbar strong{margin-right:auto}.emissionbar .state{font-weight:700}.emissionbar.ready{border-left:5px solid #3d8b45}.emissionbar.pending{border-left:5px solid #d4a72c}.wrap{padding:22px;max-width:1600px;margin:auto}
+.card{background:#fff;border:1px solid var(--borda);border-radius:8px;padding:18px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 14px;color:var(--azul)} .grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px}
+label{font-size:12px;font-weight:700;display:block;margin-bottom:5px} input,select,textarea{width:100%;padding:8px;border:1px solid #aeb8c2;border-radius:4px;background:#fff}
+textarea{min-height:58px}.muted{font-size:12px;color:#66737f}.hidden{display:none}
+table{width:100%;border-collapse:collapse;font-size:12px} th{background:var(--azul);color:#fff;padding:7px;border:1px solid #fff;white-space:nowrap}
+td{padding:4px;border:1px solid #d8dee5} td input,td select{min-width:95px;padding:6px}
+.status{font-weight:700;text-align:center}.incompleta td{background:var(--erro)}.completa td{background:var(--ok)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.kpi{border:1px solid var(--borda);border-radius:6px;text-align:center;overflow:hidden}
+.kpi b{display:block;background:var(--azul2);padding:7px;font-size:12px}.kpi span{display:block;padding:10px;font-size:18px;font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.scroll{overflow:auto}
+.classbox{grid-column:1/-1;border:1px solid var(--borda);background:#f8fafc;border-radius:6px;padding:10px}
+.classrow{display:grid;grid-template-columns:140px 1fr auto;gap:8px;margin-top:7px;align-items:end}
+.badge{display:inline-block;padding:3px 7px;border-radius:12px;background:var(--azul2);font-size:11px;font-weight:700}
+.pend{font-size:10px;color:#9b1c1c;max-width:210px;line-height:1.25}.oktxt{font-size:10px;color:#246b2a;font-weight:700}
+.fieldgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.subgroup{margin:16px 0 8px;padding-top:10px;border-top:1px solid #d9e0e5}.subgroup h3{margin:0 0 10px;font-size:14px;color:#314b5f}.factorgrid{display:grid;grid-template-columns:1.5fr .7fr 1fr;gap:8px;align-items:end}.docgrid{display:grid;grid-template-columns:1.35fr .7fr 1fr 1.25fr;gap:8px;align-items:end;margin-bottom:8px}.docfile{font-size:12px}.docfile:disabled{opacity:.45;cursor:not-allowed}.docname{font-size:12px;margin-top:4px;word-break:break-word}.resultgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;align-items:end}.fieldgrid .wide{grid-column:span 2}.fieldgrid .full{grid-column:1/-1}
+textarea{min-height:76px;resize:vertical}.review{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.review .kpi span{font-size:13px}
+@media(max-width:900px){.grid,.kpis,.fieldgrid,.review{grid-template-columns:1fr 1fr}}
+
+.galpaoOnly{display:none}
+body.mode-galpao .apartamentoOnly{display:none!important}
+body.mode-galpao .galpaoOnly{display:block}
+body.mode-galpao label.galpaoOnly{display:flex}
+.protoNote{background:#eef5fa;border-left:4px solid #174f7a;padding:10px 12px;border-radius:6px;margin:10px 0 14px;color:#425466;font-size:13px}
+
+.terrainDims{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.restrictionRow{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.methodSelector{background:#f5f7f9;border:1px solid #d7e0e7;border-radius:10px;padding:14px;margin-bottom:14px}
+.method-mcddm{background:#eef6fb;border:1px solid #bdd9ea;border-radius:10px;padding:16px;margin-top:12px}
+.method-mevol{background:#f7f2e9;border:1px solid #dfcfad;border-radius:10px;padding:16px;margin-top:12px}
+.methodBadge{display:inline-block;font-size:12px;font-weight:700;padding:4px 8px;border-radius:999px;margin-bottom:8px}
+.method-mcddm .methodBadge{background:#d6eaf6;color:#174f7a}
+.method-mevol .methodBadge{background:#eadfc8;color:#70551d}
+@media(max-width:900px){.terrainDims,.restrictionRow{grid-template-columns:1fr 1fr}}
+
+.currencyBR{text-align:right;font-variant-numeric:tabular-nums}
+#metodoUniversalMCDDM,#metodoUniversalMEVOL{margin-top:14px}
+
+.numberBR,.currencyBR{text-align:right;font-variant-numeric:tabular-nums}
+.calculatedField{background:#f2f5f7!important;color:#34495e;font-weight:700}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+.aii-wrap{position:fixed;left:-20000px;top:0;width:794px;background:#fff;font-family:Arial,sans-serif}
+.aii-page{width:794px;height:1123px;background:#fff;padding:48px;position:relative}
+.aii-head{border-bottom:3px solid #245a7a;padding-bottom:8px;margin-bottom:10px}
+.aii-k{font-size:13px;font-weight:700;color:#173d5b}.aii-title{font-size:22px;font-weight:700;color:#173d5b}.aii-sub{font-size:17px;font-weight:700;color:#34586f}
+.aii-meta{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #d7e0e6;margin:10px 0}
+.aii-meta>div{padding:7px;border-right:1px solid #d7e0e6;font-size:12px}.aii-meta>div:last-child{border:0}.aii-meta b{display:block;font-size:9px;color:#667782;text-transform:uppercase}
+.aii-map{height:780px;border:1px solid #b8c6cf;position:relative;overflow:hidden;background:#eef1f2}
+.aii-map-inner{height:100%}.aii-caption{font-size:10px;color:#667782;margin-top:7px}
+.aii-foot{position:absolute;left:48px;right:48px;bottom:32px;border-top:1px solid #d7e0e6;padding-top:6px;font-size:9px;color:#667782}
+.aii-pin{position:relative;width:34px;height:44px}.aii-pin-body{position:absolute;left:3px;top:0;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 5px #0007}
+.aii-pin-text{position:absolute;left:3px;top:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:9px;line-height:1;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.65);z-index:2;overflow:hidden}
+.aii-legend{background:#fff;padding:7px 9px;border:1px solid #ccd7de;border-radius:4px;line-height:1.5;font-size:11px}
+</style>
+
+<link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+
+<style>
+/* v19 — módulos independentes: tipologia controla apenas Caracterização; metodologia controla apenas método. */
+#caracNeutral,#methodNeutral{display:none}
+body.v19-carac-none #caracNeutral{display:block}
+body.v19-carac-none .apartamentoOnly,body.v19-carac-none .galpaoOnly{display:none!important}
+body.v19-carac-apartamento .apartamentoOnly{display:block!important}
+body.v19-carac-apartamento .galpaoOnly,body.v19-carac-apartamento #caracNeutral{display:none!important}
+body.v19-carac-galpao .galpaoOnly{display:block!important}
+body.v19-carac-galpao .apartamentoOnly,body.v19-carac-galpao #caracNeutral{display:none!important}
+body.v19-carac-unsupported #caracNeutral{display:block}
+body.v19-carac-unsupported .apartamentoOnly,body.v19-carac-unsupported .galpaoOnly{display:none!important}
+body.v19-method-none #methodNeutral{display:block}
+body.v19-method-none #mcddmUniversalHost,body.v19-method-none #evolutivoUniversal{display:none!important}
+</style>
+</head>
+<body><div id="homeScreen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#f5f8fb,#e9f0f5);display:flex;align-items:center;justify-content:center;padding:24px"><div style="width:min(760px,94vw);background:#fff;border:1px solid #d7e0e7;border-radius:18px;padding:34px;box-shadow:0 16px 45px rgba(31,78,120,.14)"><div style="font-size:13px;color:#607d8b;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Protótipo funcional</div><h1 style="margin:8px 0 6px;color:#173d5b">Elaboração Padronizada de Laudos de Avaliação Imobiliária</h1><p style="color:#60717d;margin:0 0 26px">Inicie uma nova avaliação ou reabra um trabalho salvo anteriormente.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><button type="button" id="homeNew" class="primary" style="padding:18px;font-size:16px">Nova avaliação</button><button type="button" id="homeOpen" style="padding:18px;font-size:16px">Abrir avaliação salva</button></div><div style="margin-top:22px;padding-top:16px;border-top:1px solid #e5ebef;font-size:12px;color:#71808a">Web2 — Teste de botões Sim / Não</div></div></div>
+<header><h1>Protótipo Web – Laudo de Avaliação</h1></header>
+<nav>
+<button class="tab active" data-tab="inicio">Início</button>
+<button class="tab" data-tab="local">Localização</button>
+<button class="tab" data-tab="carac">Caracterização</button>
+<button class="tab" data-tab="met">Metodologia</button>
+<button class="tab" data-tab="amos" id="tabAmostras">Amostras</button>
+<button class="tab" data-tab="diag">Diagnóstico</button>
+<button class="tab" data-tab="resultado">Resultado</button>
+<button class="tab" data-tab="obs">Observações</button>
+<button class="tab" data-tab="docs">Anexos / Encerramento</button>
+<button class="tab" data-tab="anexo">Prévia do Anexo I</button>
+</nav>
+<div class="wrap">
+
+<div class="card"><h2>Controle de versão para entrega</h2><div class="fieldgrid"><div><b>Próxima versão</b><div id="deliveryRevision">R00</div></div><div><b>Última finalização</b><div id="deliveryLast">Ainda não finalizada</div></div><div class="full muted">Gerar PDF não altera a revisão. A revisão é registrada somente em “Finalizar versão para entrega”.</div></div></div><p class="required-note">Modo de testes: obrigatoriedade de campos temporariamente desativada. Os campos obrigatórios serão definidos na versão final.</p><div id="emissionBar" class="emissionbar pending">
+<strong>Emissão</strong>
+<span id="emissionState" class="state">PENDENTE</span>
+<button id="saveFullTop">Salvar avaliação</button>
+<button type="button" id="goHomeTop">Página Inicial</button>
+<button id="emitPdfTop" class="primary">Gerar Laudo PDF</button><button type="button" id="finalizeDelivery" class="primary">Finalizar versão para entrega</button>
+<input id="fileFullTop" type="file" accept=".avaliacao,.json,application/json" class="hidden">
+</div>
+
+<section id="inicio" class="tabpane">
+<div class="card"><h2>Início</h2>
+
+<div class="subgroup"><h3>1. Identificação da Avaliação</h3>
+<div class="fieldgrid">
+<label>Nº da OS<input data-form="inicio" data-key="os"></label>
+<label>Nº do laudo<input data-form="inicio" data-key="numeroLaudo"></label>
+<div></div>
+
+<label>Data da vistoria<input type="date" data-form="inicio" data-key="dataVistoria"></label>
+<label>Data-base<input type="date" data-form="inicio" data-key="dataBase"></label>
+<div></div>
+
+<label>Finalidade<select data-form="inicio" data-key="finalidade"><option value=""></option><option>Arrematação/Adjudicação</option><option>Assistência técnica judicial para recuperação de crédito</option><option>Assistência técnica judicial que trate de locação</option><option>Avaliação para terceiros</option><option>Consolidação de propriedade fiduciária</option><option>Dação em pagamento</option><option>Doação</option><option>Fins contábeis - CPC</option><option>Garantia de composição de dívidas</option><option>Garantia para operação de crédito</option><option>Levantamento patrimonial</option><option>Locação a terceiros</option><option>Locação de terceiros</option><option>MAPS</option><option>Registro contábil de imóvel não de uso</option><option>Outros</option></select></label>
+<label>Objetivo<select data-form="inicio" data-key="objetivo"><option value=""></option><option>Valor de Mercado</option><option>Valor de Mercado + VLI</option><option>Locação</option></select></label>
+<div></div>
+
+<label>Tipo do imóvel<select data-form="inicio" data-key="tipologia"><option value=""></option><option>Apartamento</option><option>Complexo industrial</option><option>Empreendimento</option><option>Galpão</option><option>Gleba urbana</option><option>Loja</option><option>Prédio comercial</option><option>Prédio industrial</option><option>Prédio misto</option><option>Prédio residencial</option><option>Residência</option><option>Sala</option><option>Terreno comercial</option><option>Terreno industrial</option><option>Terreno residencial</option><option>Vaga / garagem</option></select></label>
+<label>Uso atual<select data-form="inicio" data-key="uso"><option value=""></option><option>Residencial</option><option>Comercial</option><option>Misto</option><option>Outro</option></select></label>
+<div></div>
+
+<label>Condição da vistoria<select data-form="inicio" data-key="condicaoVistoria"><option value=""></option><option>Integral</option><option>Situação paradigma</option><option>Outra</option></select></label>
+<label>Acesso ao interior<select data-form="inicio" data-key="acessoInterior"><option value=""></option><option>Interna e externa</option><option>Sem acesso ao interior</option><option>Parcial</option><option>Outro</option></select></label>
+<div></div>
+</div></div>
+
+<div class="subgroup"><h3>2. Identificação do Imóvel</h3>
+<div class="fieldgrid">
+<label class="wide">Proprietário<input data-form="inicio" data-key="proprietario"></label><div></div>
+<label class="wide">Endereço<input data-form="inicio" data-key="endereco"></label>
+<label>Número / complemento<input data-form="inicio" data-key="numeroComplemento"></label>
+<label class="wide">Condomínio / empreendimento<input data-form="inicio" data-key="condominio"></label><div></div>
+<label>Bairro<input data-form="inicio" data-key="bairro"></label>
+<label>Município<input data-form="inicio" data-key="municipio"></label>
+<label>UF<select data-form="inicio" data-key="uf" id="inicioUf"></select></label>
+<label>CEP<input inputmode="numeric" maxlength="9" placeholder="00000-000" data-form="inicio" data-key="cep" id="inicioCep"></label>
+<label>Matrícula<input data-form="inicio" data-key="matricula"></label>
+<label>Cartório<input data-form="inicio" data-key="cartorio"></label>
+<label>Latitude<input inputmode="decimal" placeholder="-23.550520" data-form="inicio" data-key="latitude" id="inicioLat"></label>
+<label>Longitude<input inputmode="decimal" placeholder="-46.633308" data-form="inicio" data-key="longitude" id="inicioLon"></label>
+<div></div>
+</div>
+<p id="inicioValidation" class="muted"></p>
+</div></div></section>
+
+<section id="local" class="tabpane hidden">
+<div class="card"><h2>2. Localização e Microrregião</h2>
+<div class="subgroup"><h3>Caracterização da região</h3><div class="fieldgrid">
+<label>Uso predominante<select data-form="local" data-key="usoPred"><option value=""></option><option>Residencial</option><option>Comercial</option><option>Misto</option><option>Outro</option></select></label>
+<label>Ocupação da região<select data-form="local" data-key="ocupacao"><option value=""></option><option>Consolidada</option><option>Em consolidação</option><option>Expansão</option><option>Pouco ocupada</option></select></label>
+<label>Padrão predominante<select data-form="local" data-key="padrao"><option value=""></option><option>Baixo</option><option>Médio-baixo</option><option>Médio</option><option>Médio-alto</option><option>Alto</option></select></label>
+<label>Densidade de ocupação<select data-form="local" data-key="densidade"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label class="full">Observação sobre a região<textarea data-form="local" data-key="obsRegiao"></textarea></label>
+</div></div>
+<div class="subgroup"><h3>Acessibilidade</h3><div class="fieldgrid">
+<label>Acesso viário<select data-form="local" data-key="acessoViario"><option value=""></option><option>Ruim</option><option>Regular</option><option>Bom</option><option>Muito bom</option></select></label>
+<label>Transporte público<select data-form="local" data-key="transportePublico"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Facilidade de estacionamento<select data-form="local" data-key="estacionamento"><option value=""></option><option>Ruim</option><option>Regular</option><option>Bom</option><option>Muito bom</option></select></label>
+<label>Proximidade de vias principais<select data-form="local" data-key="viasPrincipais"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></label>
+<label>Acesso a rodovias<select data-form="local" data-key="rodovias"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></label>
+<label>Transporte sobre trilhos<select data-form="local" data-key="trilhos"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></label>
+<label class="full">Outros aspectos relevantes<input data-form="local" data-key="outrosAcesso"></label>
+</div></div>
+<div class="subgroup"><h3>Infraestrutura urbana</h3><div class="fieldgrid">
+<label>Abastecimento de água<select data-form="local" data-key="agua"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Rede de esgoto<select data-form="local" data-key="esgoto"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Energia elétrica<select data-form="local" data-key="energia"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Iluminação pública<select data-form="local" data-key="iluminacao"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Pavimentação<select data-form="local" data-key="pavimentacao"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Drenagem urbana<select data-form="local" data-key="drenagem"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Telefonia/dados<select data-form="local" data-key="dados"><option value=""></option><option>Sim</option><option>Não</option></select></label><label>Gás canalizado<select data-form="local" data-key="gas"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+</div></div>
+<div class="subgroup"><h3>Equipamentos / serviços e fatores locacionais</h3>
+<div class="factorgrid"><b>Equipamento / serviço</b><b>Existe?</b><b>Impacto no imóvel</b></div>
+<div class="factorgrid"><div>Comércio/serviços</div><select data-form="local" data-key="comercioExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="comercioObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Escolas</div><select data-form="local" data-key="escolasExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="escolasObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Saúde</div><select data-form="local" data-key="saudeExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="saudeObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Parques/lazer</div><select data-form="local" data-key="lazerExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="lazerObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Shopping</div><select data-form="local" data-key="shoppingExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="shoppingObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Metrô/trem</div><select data-form="local" data-key="metroExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="metroObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Ocupação irregular</div><select data-form="local" data-key="irregularExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="irregularObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div><div class="factorgrid"><div>Outro</div><select data-form="local" data-key="outroExiste"><option value=""></option><option>Sim</option><option>Não</option></select><select data-form="local" data-key="outroObs"><option value=""></option><option>Desfavorável</option><option>Neutro</option><option>Favorável</option><option>N/A</option></select></div>
+</div></div></section>
+
+<section id="carac" class="tabpane hidden">
+<div id="caracNeutral" class="card">
+<h2>3. Caracterização</h2>
+<div class="protoNote">Selecione o Tipo do imóvel na guia Início para disponibilizar os campos de Caracterização. Nenhuma tipologia é presumida em uma nova avaliação.</div>
+</div>
+<div class="card apartamentoOnly"><h2>3. Caracterização — Apartamento</h2>
+<div class="subgroup"><h3>Unidade avaliada</h3><div class="fieldgrid">
+<label>Área constante da matrícula (m²)<input type="number" step="any" data-form="carac" data-key="areaMatricula"></label>
+<label>Área não averbada (m²)<input type="number" step="any" data-form="carac" data-key="naoAverbada"></label>
+<label>Área adotada na avaliação (m²)<input type="number" step="any" data-form="carac" data-key="areaAdotada"></label>
+<label>Dormitórios<input type="number" data-form="carac" data-key="dormitorios"></label>
+<label>Suítes<input type="number" data-form="carac" data-key="suites"></label>
+<label>Banheiros<input type="number" data-form="carac" data-key="banheiros"></label>
+<label>Vagas<input type="number" data-form="carac" data-key="vagas"></label>
+<label>Andar / pavimento<input data-form="carac" data-key="andar"></label>
+</div></div>
+<div class="subgroup"><h3>Lazer / infraestrutura condominial</h3><div class="fieldgrid">
+<label>Piscina<select data-form="carac" data-key="piscina"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Academia<select data-form="carac" data-key="academia"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Salão de festas<select data-form="carac" data-key="salaoFestas"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Churrasqueira<select data-form="carac" data-key="churrasqueira"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Playground<select data-form="carac" data-key="playground"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Quadra<select data-form="carac" data-key="quadra"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Salão de jogos<select data-form="carac" data-key="salaoJogos"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label><label>Espaço gourmet<select data-form="carac" data-key="gourmet"><option value=""></option><option>Sim</option><option>Não</option><option>NI</option></select></label>
+<label>Outro<input data-form="carac" data-key="outroLazer"></label>
+</div></div>
+<div class="subgroup"><h3>Vistoria e documentação</h3><div class="fieldgrid">
+<label>Impedimento para regularização da área não averbada?<select data-form="carac" data-key="impRegularizacao"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Motivo do impedimento de regularização<input data-form="carac" data-key="motivoRegularizacao"></label>
+<label>Houve impedimento para acesso ao interior do imóvel?<select data-form="carac" data-key="impAcesso"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Motivo do impedimento de acesso<input data-form="carac" data-key="motivoAcesso"></label>
+<label>As informações da documentação correspondem às verificadas na vistoria?<select data-form="carac" data-key="docVistoria"><option value=""></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Divergências entre documentação e vistoria<input data-form="carac" data-key="divergencias"></label>
+</div></div></div>
+<div class="card galpaoOnly">
+<h2>3. Caracterização — Galpão</h2>
+<div class="protoNote">Protótipo baseado nos campos do MODELO de laudo atual. Os cálculos técnicos permanecem nos documentos específicos anexados.</div>
+
+<div class="subgroup"><h3>Dados do terreno</h3><div class="fieldgrid">
+<label>Área total do terreno (m²)<input type="number" step="any" data-form="galpao" data-key="areaTerreno"></label>
+<label>Nº de frentes<input type="number" step="1" data-form="galpao" data-key="frentes"></label>
+<div class="full terrainDims">
+<label>Testada principal (m)<input type="number" step="any" data-form="galpao" data-key="testada"></label>
+<label>Lado direito (m)<input type="number" step="any" data-form="galpao" data-key="ladoDireito"></label>
+<label>Fundos (m)<input type="number" step="any" data-form="galpao" data-key="fundos"></label>
+<label>Lado esquerdo (m)<input type="number" step="any" data-form="galpao" data-key="ladoEsquerdo"></label>
+</div>
+<label>Situação<select data-form="galpao" data-key="situacao"><option></option><option>Meio de quadra</option><option>Esquina</option><option>Encravado</option><option>Outro</option></select></label>
+<label>Fração ideal<input type="number" step="any" data-form="galpao" data-key="fracaoIdeal"></label>
+<label>Topografia<select data-form="galpao" data-key="topografia"><option></option><option>Plano</option><option>Aclive</option><option>Declive</option><option>Mista</option></select></label>
+<label>Superfície<select data-form="galpao" data-key="superficie"><option></option><option>Seca</option><option>Alagadiça</option><option>Brejosa</option><option>Outra</option></select></label>
+<label>Cota do greide<select data-form="galpao" data-key="greide"><option></option><option>Abaixo</option><option>Mesmo nível</option><option>Acima</option></select></label>
+<label>Formato<select data-form="galpao" data-key="formato"><option></option><option>Regular</option><option>Irregular</option></select></label>
+<label class="wide">Zoneamento e usos permitidos<input data-form="galpao" data-key="zoneamento"></label>
+<label>Taxa de ocupação máxima (%)<input type="number" step="any" data-form="galpao" data-key="taxaOcupacao"></label>
+<label>Coeficiente de aproveitamento<input type="number" step="any" data-form="galpao" data-key="coefAproveitamento"></label>
+<label>Taxa de permeabilidade (%)<input type="number" step="any" data-form="galpao" data-key="taxaPermeabilidade"></label>
+<label>Altura máxima permitida<input data-form="galpao" data-key="alturaMaxima"></label>
+<label>Tipo de fechamento<input data-form="galpao" data-key="fechamento"></label>
+<div class="full">
+<label>Restrições no terreno</label>
+<div id="restricoesTerreno"></div>
+<button type="button" id="addRestricaoTerreno" style="margin-top:8px">+ Adicionar restrição</button>
+<input type="hidden" data-form="galpao" data-key="restricoes">
+<input type="hidden" data-form="galpao" data-key="areaRestricao">
+</div>
+<label>Área adotada para cálculo (m²)<input id="areaTerrenoAdotada" type="text" inputmode="decimal" data-form="galpao" data-key="areaTerrenoAdotada" class="numberBR"></label>
+<label class="full">Observações do terreno<textarea data-form="galpao" data-key="obsTerreno"></textarea></label>
+</div></div>
+
+<div class="subgroup"><h3>Benfeitorias / Galpão</h3><div class="fieldgrid">
+<label>Área construída total (m²)<input type="number" step="any" data-form="galpao" data-key="areaConstruida"></label>
+<label>Área não averbada (m²)<input type="number" step="any" data-form="galpao" data-key="naoAverbada"></label>
+<label>Área construída adotada na avaliação (m²)<input type="number" step="any" data-form="galpao" data-key="areaAvalianda"></label>
+<label>Idade aparente (anos)<input type="number" step="any" data-form="galpao" data-key="idadeAparente"></label>
+<label>Estado de conservação<select data-form="galpao" data-key="conservacao"><option></option><option>Novo</option><option>Bom</option><option>Regular</option><option>Ruim</option></select></label>
+<label>Padrão de acabamento<select data-form="galpao" data-key="padraoAcabamento"><option></option><option>Baixo</option><option>Normal</option><option>Alto</option><option>Especial</option></select></label>
+<label>Pé-direito (m)<input type="number" step="any" data-form="galpao" data-key="peDireito"></label>
+<label>Estrutura<input data-form="galpao" data-key="estrutura"></label>
+<label>Cobertura<input data-form="galpao" data-key="cobertura"></label>
+<label>Piso<input data-form="galpao" data-key="piso"></label>
+<label>Docas<input type="number" step="1" data-form="galpao" data-key="docas"></label>
+<label>Pontes rolantes<input type="number" step="1" data-form="galpao" data-key="pontesRolantes"></label>
+<label>Pátio de manobras<select data-form="galpao" data-key="patio"><option></option><option>Sim</option><option>Não</option><option>NI</option></select></label>
+<label>Estacionamento<select data-form="galpao" data-key="estacionamentoGalpao"><option></option><option>Sim</option><option>Não</option><option>NI</option></select></label>
+<label>Sistema de combate a incêndio<select data-form="galpao" data-key="incendio"><option></option><option>Sim</option><option>Não</option><option>NI</option></select></label>
+<label class="full">Divisão interna / outras características<textarea data-form="galpao" data-key="divisaoInterna"></textarea></label>
+</div></div>
+
+<div class="subgroup"><h3>Vistoria e documentação</h3><div class="fieldgrid">
+<label>Impedimento para regularização da área não averbada?<select data-form="galpao" data-key="impRegularizacao"><option></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Motivo<input data-form="galpao" data-key="motivoRegularizacao"></label>
+<label>Houve impedimento para acesso ao interior?<select data-form="galpao" data-key="impAcesso"><option></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Motivo<input data-form="galpao" data-key="motivoAcesso"></label>
+<label>A documentação corresponde à vistoria?<select data-form="galpao" data-key="docVistoria"><option></option><option>Sim</option><option>Não</option></select></label>
+<label class="wide">Observações<input data-form="galpao" data-key="obsDoc"></label>
+</div></div>
+</div>
+</section>
+
+<section id="met" class="tabpane hidden">
+
+<div class="card">
+<h2>Metodologia</h2>
+<div class="methodSelector"><div class="fieldgrid">
+<label>Metodologia de avaliação
+<select id="metodoAvaliacaoUniversal" data-form="metodologia" data-key="metodoAvaliacao">
+<option value=""></option>
+<option>MCDDM - Método Comparativo Direto de Dados de Mercado</option>
+<option>MEVOL - Método Evolutivo</option>
+</select></label><div></div><div></div>
+</div></div>
+</div>
+<div id="methodNeutral" class="card">
+</div>
+<div id="mcddmUniversalHost">
+<div id="metodoUniversalMCDDM" class="card method-mcddm">
+<h2>Metodologia</h2>
+
+<div class="subgroup"><h3>Modelo</h3>
+<div class="fieldgrid">
+<label>Total de dados<input type="number" min="0" step="1" data-form="metodados" data-key="totalDados"></label>
+<label>Dados utilizados no modelo<input type="number" min="0" step="1" data-form="metodados" data-key="dadosUtilizados"></label>
+<div></div>
+
+<label>Total de variáveis<input type="number" min="0" max="8" step="1" data-form="metodados" data-key="totalVariaveis"></label>
+<label>Variáveis utilizadas no modelo<input type="number" min="0" max="8" step="1" data-form="metodados" data-key="variaveisUtilizadas"></label>
+<div></div>
+
+<label class="full">Equação do modelo
+<textarea data-form="metodados" data-key="equacao" style="min-height:90px" placeholder="Informe a equação do modelo"></textarea></label>
+
+<label>R²<input type="number" min="0" max="1" step="0.001" data-form="metodados" data-key="r2"></label>
+<label>R² ajustado<input type="number" min="0" max="1" step="0.001" data-form="metodados" data-key="r2aj"></label>
+<div></div>
+</div></div>
+
+<div class="subgroup"><h3>Resultados da inferência</h3>
+<div class="fieldgrid">
+<label>VU estimado / central (R$/m²)<input id="mcVuCentral" type="text" inputmode="decimal" data-form="metodados" data-key="vuCentral" class="currencyBR"></label>
+<label>Limite inferior (R$/m²)<input id="mcLimInf" type="text" inputmode="decimal" data-form="metodados" data-key="limInf" class="currencyBR"></label>
+<label>Limite superior (R$/m²)<input id="mcLimSup" type="text" inputmode="decimal" data-form="metodados" data-key="limSup" class="currencyBR"></label>
+
+<label>VU adotado (R$/m²)<input id="mcVuAdotado" type="text" inputmode="decimal" data-form="metodados" data-key="vuAdotado" class="currencyBR"></label>
+<div></div><div></div>
+
+<label>Grau de fundamentação
+<select data-form="metodados" data-key="grauFund"><option value=""></option><option>I</option><option>II</option><option>III</option></select></label>
+<label>Grau de precisão
+<select data-form="metodados" data-key="grauPrecisao"><option value=""></option><option>I</option><option>II</option><option>III</option></select></label>
+<div></div>
+</div></div>
+
+<div class="subgroup"><h3>Variáveis adotadas no modelo</h3>
+<p class="muted">Cadastre de 1 a 8 variáveis. As colunas da guia Amostras e do Anexo I são criadas automaticamente.</p>
+<div id="vars"></div>
+<div class="actions" style="margin-top:12px"><button id="addVar">Adicionar variável</button></div>
+</div>
+</div>
+</div>
+<div id="metodoUniversalMEVOL" class="card method-mevol hidden">
+<span class="methodBadge">MEVOL</span>
+<h3>Método Evolutivo</h3>
+<div class="subgroup"><h3>Determinação do valor do terreno</h3><div class="fieldgrid">
+<label>Método utilizado para o terreno
+<select data-form="evolutivo" data-key="metodoTerreno" id="metodoTerreno">
+<option>MCDDM - Método Comparativo Direto de Dados de Mercado</option>
+<option>MINVO - Método Involutivo</option>
+</select></label><div></div><div></div>
+</div>
+<p id="minvoAviso" class="muted hidden">Método Involutivo previsto na arquitetura, mas ainda não disponível neste protótipo.</p></div>
+
+<div id="mcddmTerrenoAnchor"></div>
+
+<div class="subgroup"><h3>7.2 Quantificação do Custo — Benfeitorias</h3>
+<p class="muted">A ferramenta registra os resultados do cálculo externo; o memorial permanece como documento anexo.</p>
+<div class="fieldgrid">
+<label>Valor atribuído às benfeitorias (R$)<input id="evValorBenfeitorias" type="text" inputmode="decimal" data-form="evolutivo" data-key="valorBenfeitorias" class="currencyBR"></label>
+<label>BDI utilizado (%)<input type="number" step="0.01" data-form="evolutivo" data-key="bdi"></label><div></div>
+<label>Fator de Comercialização (FC)<input id="evFC" type="number" step="0.0001" value="1" data-form="evolutivo" data-key="fc"></label>
+<label class="wide">Observações sobre o FC<input data-form="evolutivo" data-key="obsFc"></label>
+<label class="full">Demais observações<textarea data-form="evolutivo" data-key="obs"></textarea></label>
+</div></div>
+<div class="subgroup"><h3>Fundamentação da Quantificação do Custo</h3><div class="fieldgrid"><label>Grau de fundamentação<select data-form="evolutivo" data-key="fundCustoGrau"><option value=""></option><option>I</option><option>II</option><option>III</option></select></label></div></div>
+<div class="subgroup"><h3>Fundamentação do Método Evolutivo</h3><div class="fieldgrid"><label>Grau de fundamentação<select data-form="evolutivo" data-key="fundEvGrau"><option value=""></option><option>I</option><option>II</option><option>III</option></select></label></div></div>
+
+<div class="subgroup"><h3>Composição do Método Evolutivo</h3>
+<div class="fieldgrid">
+<label>Valor do terreno (R$)<input id="evCompTerreno" readonly class="calculatedField"></label>
+<label>Valor das benfeitorias (R$)<input id="evCompBenfeitorias" readonly class="calculatedField"></label>
+<label>FC<input id="evCompFC" readonly class="calculatedField"></label>
+<label>Valor antes do FC (R$)<input id="evSubtotal" readonly class="calculatedField"></label>
+<label>Valor atribuído ao imóvel (R$)<input id="evValorImovel" readonly class="calculatedField"></label><div></div>
+</div></div>
+</div>
+</section>
+
+<section id="amos" class="tabpane hidden">
+<div id="methodBlock" class="card hidden" style="border-left:5px solid #9b1c1c">
+<h2>AMOSTRAS BLOQUEADA</h2>
+<p id="methodBlockMsg" class="muted">Conclua o cadastro das variáveis na Metodologia para iniciar o preenchimento dos dados amostrais.</p>
+</div>
+<div class="card">
+<div class="kpis">
+<div class="kpi"><b>Amostras iniciadas</b><span id="ki">0</span></div>
+<div class="kpi"><b>Amostras completas</b><span id="kc">0</span></div>
+<div class="kpi"><b>Amostras com pendências</b><span id="kp">0</span></div>
+<div class="kpi"><b>Status geral</b><span id="ks" style="font-size:13px">SEM AMOSTRAS</span></div>
+</div>
+</div>
+<div class="card">
+<h2>Amostras</h2>
+<div class="actions" style="margin-bottom:12px">
+<button id="addSample" class="primary">Adicionar amostra</button>
+<button id="importSamples">Importar amostras</button>
+<input id="fileSamples" type="file" accept=".xlsx,.xls,.csv" class="hidden">
+
+
+
+</div>
+<div id="sampleImportPanel" class="card hidden" style="border-left:5px solid var(--azul)">
+<h2>Importação assistida de amostras</h2>
+<p class="muted">A ferramenta associa automaticamente apenas cabeçalhos reconhecidos com segurança. Confira as associações antes de importar. Colunas sem correspondência podem ser ignoradas.</p>
+<div id="sampleImportInfo" class="muted" style="margin-bottom:10px"></div>
+<div class="scroll"><table><thead><tr><th>Campo da ferramenta</th><th>Coluna encontrada no arquivo</th><th>Prévia</th></tr></thead><tbody id="sampleMapBody"></tbody></table></div>
+<div class="actions" style="margin-top:12px"><button id="confirmSampleImport" class="primary">Importar campos associados</button><button id="cancelSampleImport">Cancelar</button></div>
+</div>
+<div class="scroll"><table><thead><tr id="sampleHead"></tr></thead><tbody id="sampleBody"></tbody></table></div>
+</div>
+</section>
+
+
+<section id="diag" class="tabpane hidden">
+<div class="card"><h2>6. Diagnóstico de Mercado</h2><div class="fieldgrid">
+<label>Desempenho de mercado<select data-form="diag" data-key="desempenho"><option value=""></option><option>Recessivo</option><option>Estável</option><option>Aquecido</option></select></label>
+<label>Demanda<select data-form="diag" data-key="demanda"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Quantidade de ofertas<select data-form="diag" data-key="ofertas"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Liquidez<select data-form="diag" data-key="liquidez"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></label>
+<label>Prazo estimado de comercialização<select data-form="diag" data-key="prazo"><option value=""></option><option>Até 3 meses</option><option>3 a 6 meses</option><option>6 a 12 meses</option><option>Acima de 12 meses</option></select></label>
+<label class="wide">Facilitadores de negociação<input data-form="diag" data-key="facilitadores"></label>
+<label class="wide">Dificultadores de negociação<input data-form="diag" data-key="dificultadores"></label>
+<label class="full">Observações de mercado<textarea data-form="diag" data-key="obs"></textarea></label>
+</div></div></section>
+
+<section id="resultado" class="tabpane hidden"><div id="resultadoMCDDM" class="card"><h2>Resultado da avaliação</h2><div class="subgroup"><h3>Cálculo</h3><div class="fieldgrid">
+<label>VU adotado (R$/m²)<input id="resMcVU" type="text" inputmode="decimal" class="currencyBR calculatedField" data-form="resultado" data-key="vu" readonly title="Preenchido automaticamente pela Metodologia"></label>
+<label>Área adotada (m²)<input id="resMcArea" type="text" inputmode="decimal" class="numberBR calculatedField" data-form="resultado" data-key="areaAdotada" readonly title="Preenchido automaticamente pela Caracterização: área construída adotada para imóveis edificados; área do terreno para a tipologia Terreno"></label><div></div>
+<label>Valor calculado (R$)<input id="resMcCalculado" type="text" class="calculatedField" data-form="resultado" data-key="valorCalculado" readonly></label>
+<label>Valor arredondado (R$)<input id="resMcArredondado" type="text" class="calculatedField" data-form="resultado" data-key="valorArredondado" readonly></label><div></div>
+<label>Valor adotado (R$)<input id="resMcAdotado" type="text" inputmode="decimal" class="currencyBR" data-form="resultado" data-key="vm"></label>
+<label>Diferença para o valor calculado (%)<input id="resMcDiferenca" readonly class="calculatedField"></label><div></div>
+</div></div><div class="subgroup"><h3>Valores a apresentar — conforme Objetivo da guia Início</h3><div class="resultgrid"><label data-result-field="mercado">Valor de Mercado (R$)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultado" data-key="valorMercado" readonly title="Transportado automaticamente do Valor adotado"></label><div></div><label data-result-field="vliMax">VLI Máximo (R$)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultado" data-key="vliMax"></label><label data-result-field="prazoMin">Prazo Mínimo<input data-form="resultado" data-key="prazoMin"></label><label data-result-field="vliMin">VLI Mínimo (R$)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultado" data-key="vliMin"></label><label data-result-field="prazoMax">Prazo Máximo<input data-form="resultado" data-key="prazoMax"></label><label data-result-field="locacao">Valor de Locação (R$/mês)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultado" data-key="valorLocacao"></label><label data-result-field="locacaoMax">Valor de Locação Máximo (R$/mês)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultado" data-key="valorMaxLocacao"></label></div></div></div>
+<div id="resultadoMEVOL" class="card method-mevol hidden">
+<span class="methodBadge">MEVOL</span><h2>Resultado — Método Evolutivo</h2>
+<div class="protoNote">A composição é trazida automaticamente da Metodologia. O valor adotado permanece sob responsabilidade do avaliador.</div>
+<div class="subgroup"><h3>Composição do valor</h3><div class="fieldgrid">
+<label>Valor do terreno (R$)<input id="resEvTerreno" readonly class="calculatedField"></label>
+<label>Valor das benfeitorias (R$)<input id="resEvBenfeitorias" readonly class="calculatedField"></label>
+<label>Fator de Comercialização (FC)<input id="resEvFC" readonly class="calculatedField"></label>
+<label>Valor antes do FC (R$)<input id="resEvSubtotal" readonly class="calculatedField"></label>
+<label>Valor de mercado calculado (R$)<input id="resEvCalculado" readonly class="calculatedField"></label>
+<label>Valor arredondado (R$)<input id="resEvArredondado" readonly class="calculatedField"></label><div></div>
+</div></div>
+<div class="subgroup"><h3>Valor adotado</h3><div class="fieldgrid">
+<label>Valor de mercado adotado (R$)<input id="resEvAdotado" type="text" inputmode="decimal" class="currencyBR" data-form="resultadoEvolutivo" data-key="valorAdotado"></label>
+<label>Diferença para o valor calculado (%)<input id="resEvDiferenca" readonly class="calculatedField"></label><div></div>
+<label class="wide">Observações do resultado<input data-form="resultadoEvolutivo" data-key="observacoes"></label><div></div>
+</div></div>
+<div class="subgroup"><h3>Valores a apresentar — conforme Objetivo da guia Início</h3><div class="resultgrid">
+<label data-ev-result="mercado">Valor de Mercado (R$)<input id="resEvMercado" readonly class="calculatedField"></label><div data-ev-result="mercado"></div>
+<label data-ev-result="vliMax">VLI Máximo (R$)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultadoEvolutivo" data-key="vliMax"></label>
+<label data-ev-result="prazoMin">Prazo Mínimo<input data-form="resultadoEvolutivo" data-key="prazoMin"></label>
+<label data-ev-result="vliMin">VLI Mínimo (R$)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultadoEvolutivo" data-key="vliMin"></label>
+<label data-ev-result="prazoMax">Prazo Máximo<input data-form="resultadoEvolutivo" data-key="prazoMax"></label>
+<label data-ev-result="locacao">Valor de Locação (R$/mês)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultadoEvolutivo" data-key="valorLocacao"></label>
+<label data-ev-result="locacaoMax">Valor de Locação Máximo (R$/mês)<input type="text" inputmode="decimal" class="currencyBR" data-form="resultadoEvolutivo" data-key="valorMaxLocacao"></label>
+</div></div></div>
+</section>
+
+<section id="obs" class="tabpane hidden"><div class="card"><h2>8. Observações Gerais do Laudo</h2>
+<p class="muted">Registre quaisquer ressalvas, esclarecimentos, particularidades do imóvel ou aspectos técnicos relevantes que não tenham sido contemplados nos campos estruturados.</p>
+<textarea data-form="observacoes" data-key="gerais" style="min-height:180px"></textarea></div></section>
+
+<section id="docs" class="tabpane hidden"><div class="card"><h2>9. Anexos que acompanham o laudo</h2>
+<div class="docgrid"><b>Anexo</b><b>Situação</b><b>Observação</b><b>Arquivo PDF</b></div>
+<div class="docgrid">
+<div>Matrícula</div>
+<select data-form="docs" data-key="matriculaStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="matriculaObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="matricula" disabled><div class="docname" data-doc-name="matricula">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Relatório fotográfico do avaliando</div>
+<select data-form="docs" data-key="fotoAvaliandoStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="fotoAvaliandoObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="fotoAvaliando" disabled><div class="docname" data-doc-name="fotoAvaliando">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Relatório fotográfico das amostras</div>
+<select data-form="docs" data-key="fotoAmostrasStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="fotoAmostrasObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="fotoAmostras" disabled><div class="docname" data-doc-name="fotoAmostras">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Relatório estatístico SISDEA</div>
+<select data-form="docs" data-key="sisdeaStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="sisdeaObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="sisdea" disabled><div class="docname" data-doc-name="sisdea">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Mapa de localização das amostras</div>
+<select data-form="docs" data-key="mapaStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="mapaObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="mapa" disabled><div class="docname" data-doc-name="mapa">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>ART/RRT</div>
+<select data-form="docs" data-key="artStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="artObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="art" disabled><div class="docname" data-doc-name="art">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Memória / planilha de cálculo do VLI</div>
+<select data-form="docs" data-key="vliStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="vliObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="vli" disabled><div class="docname" data-doc-name="vli">Nenhum arquivo selecionado</div></div>
+</div><div class="docgrid">
+<div>Documentação complementar</div>
+<select data-form="docs" data-key="complementarStatus"><option value=""></option><option>Anexado</option><option>Não anexado</option><option>Não aplicável</option></select>
+<input data-form="docs" data-key="complementarObs">
+<div><input class="docfile" type="file" accept="application/pdf,.pdf" data-doc-file="complementar" disabled><div class="docname" data-doc-name="complementar">Nenhum arquivo selecionado</div></div>
+</div><div class="subgroup"><h3>10. Encerramento</h3><div class="fieldgrid">
+<label>Local<input data-form="encerramento" data-key="local"></label>
+<label>Data de emissão<input type="date" data-form="encerramento" data-key="dataEmissao"></label>
+<label class="full">Empresa responsável pela avaliação<input data-form="encerramento" data-key="empresa"></label>
+<label class="full">CNPJ<input data-form="encerramento" data-key="cnpj"></label>
+<label>Representante legal<input data-form="encerramento" data-key="representante"></label>
+<label>CPF do representante legal<input data-form="encerramento" data-key="cpf"></label>
+<label>Responsável técnico<input data-form="encerramento" data-key="responsavel"></label>
+<label>CPF do responsável técnico<input data-form="encerramento" data-key="cpfResponsavel"></label>
+<label>CREA / CAU<input data-form="encerramento" data-key="crea"></label>
+</div></div></div></section>
+<section id="anexo" class="tabpane hidden">
+<div class="card">
+<h2>Anexo I – Dados amostrais</h2>
+<p class="muted">A visualização abaixo apresenta somente amostras completas e somente as variáveis cadastradas.</p>
+<div class="kpis" style="margin-bottom:14px">
+<div class="kpi"><b>Amostras no Anexo</b><span id="annCount">0</span></div>
+<div class="kpi"><b>Variáveis utilizadas</b><span id="annVars">0</span></div>
+<div class="kpi"><b>Pendências na avaliação</b><span id="annPend">0</span></div>
+<div class="kpi"><b>Situação para PDF</b><span id="annPdf" style="font-size:13px">BLOQUEADO</span></div>
+</div>
+<div class="scroll"><table><thead><tr id="annHead"></tr></thead><tbody id="annBody"></tbody></table></div>
+<div class="actions" style="margin-top:14px">
+<button id="exportCsv">Exportar tabela (CSV)</button>
+<button id="exportData">Exportar dados estruturados</button>
+<button id="pdfCheck" class="primary" style="display:none">Gerar PDF do Anexo I</button>
+</div>
+<p id="pdfMsg" class="muted"></p>
+</div>
+</section>
+</div>
+<script>
+const APP_VERSION="20.9.4";
+const PROTOTYPE_NO_REQUIRED=true;
+const state={
+ version:"20.9.4",
+ meta:{created:new Date().toISOString(),updated:new Date().toISOString()},
+ inicio:{},local:{},carac:{},galpao:{},terreno:{},metodologia:{},metodados:{},evolutivo:{},resultado:{},resultadoEvolutivo:{},diag:{},observacoes:{},docs:{},encerramento:{},
+ vars:[],samples:[]
+};
+const fixed=[
+["endereco","Endereço / identificação"],["municipio","Município"],["uf","UF"],["fonte","Fonte"],
+["data","Data pesquisa"],["lat","Latitude"],["lon","Longitude"],["area","Área (m²)"],["valor","Valor total (R$)"]
+];
+const ufs=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+function uid(){return Math.random().toString(36).slice(2)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+function formVal(form,key){return state[form]?.[key]??""}
+
+function normalizeDecimal(v){return String(v??"").trim().replace(",",".")}
+function cepValid(v){return /^\d{5}-?\d{3}$/.test(String(v??"").trim())}
+function coordValid(v,min,max){
+ let s=normalizeDecimal(v); if(!/^-?\d+(\.\d+)?$/.test(s))return false;
+ let n=Number(s);return Number.isFinite(n)&&n>=min&&n<=max;
+}
+const REQUIRED={inicio:["os","numeroLaudo","dataVistoria","dataBase","objetivo","finalidade","tipologia","uso","condicaoVistoria","acessoInterior","proprietario","endereco","municipio","uf","cep","matricula","cartorio","latitude","longitude"],local:["usoPred","ocupacao","padrao","densidade","acessoViario","transportePublico","estacionamento","viasPrincipais","rodovias","trilhos","agua","esgoto","energia","iluminacao","pavimentacao","drenagem","dados","gas","comercioExiste","comercioObs","escolasExiste","escolasObs","saudeExiste","saudeObs","lazerExiste","lazerObs","shoppingExiste","shoppingObs","metroExiste","metroObs","irregularExiste","irregularObs","outroExiste","outroObs"],carac:["areaMatricula","naoAverbada","areaAdotada","dormitorios","suites","banheiros","vagas","andar","piscina","academia","salaoFestas","churrasqueira","playground","quadra","salaoJogos","gourmet","outroLazer","impRegularizacao","motivoRegularizacao","impAcesso","motivoAcesso","docVistoria","divergencias"],metodados:["metodo","totalDados","dadosUtilizados","totalVariaveis","variaveisUtilizadas","equacao","r2","r2aj","vuCentral","limInf","limSup","vuAdotado","grauFund","grauPrecisao"],resultado:["vu","areaAdotada","valorCalculado","valorArredondado","adotar","vm"],diag:["desempenho","demanda","ofertas","liquidez","prazo"],encerramento:["local","dataEmissao","empresa","cnpj","representante","cpf","responsavel","cpfResponsavel","crea"]};
+function isRequiredField(form,key){
+ if(PROTOTYPE_NO_REQUIRED)return false;
+ let req=(REQUIRED[form]||[]).includes(key);
+ if(form==="carac"){
+   if(key==="motivoRegularizacao")req=state.carac?.impRegularizacao==="Sim";
+   if(key==="motivoAcesso")req=state.carac?.impAcesso==="Sim";
+   if(key==="divergencias")req=state.carac?.docVistoria==="Não";
+ }
+ return req;
+}
+function paintRequired(){document.querySelectorAll("[data-form][data-key]").forEach(el=>{let req=isRequiredField(el.dataset.form,el.dataset.key);let filled=String(el.value??"").trim()!=="";
+   el.classList.toggle("required-field",req&&!filled);});}
+
+function metodologiaErrors(){
+ let e=[],m=state.metodados||{};
+ const td=Number(m.totalDados),du=Number(m.dadosUtilizados),tv=Number(m.totalVariaveis),vu=Number(m.variaveisUtilizadas);
+ if(String(m.totalDados??"").trim()&&String(m.dadosUtilizados??"").trim()&&du>td)e.push("Dados utilizados no modelo não podem superar o total de dados.");
+ if(String(m.totalVariaveis??"").trim()&&String(m.variaveisUtilizadas??"").trim()&&vu>tv)e.push("Variáveis utilizadas no modelo não podem superar o total de variáveis.");
+ if(String(m.r2??"").trim()&&(Number(m.r2)<0||Number(m.r2)>1))e.push("R² deve estar entre 0 e 1.");
+ if(String(m.r2aj??"").trim()&&(Number(m.r2aj)<0||Number(m.r2aj)>1))e.push("R² ajustado deve estar entre 0 e 1.");
+ return e;
+}
+function inicioErrors(){
+ let e=[];
+ let cep=state.inicio?.cep,lat=state.inicio?.latitude,lon=state.inicio?.longitude;
+ if(String(cep??"").trim()&&!cepValid(cep))e.push("CEP deve conter 8 dígitos.");
+ if(String(lat??"").trim()&&!coordValid(lat,-90,90))e.push("Latitude inválida: use decimal entre -90 e 90.");
+ if(String(lon??"").trim()&&!coordValid(lon,-180,180))e.push("Longitude inválida: use decimal entre -180 e 180.");
+ return e;
+}
+function formatCepInput(el){
+ let d=el.value.replace(/\D/g,"").slice(0,8);
+ el.value=d.length>5?d.slice(0,5)+"-"+d.slice(5):d;
+}
+function paintInicioValidation(){
+ let errors=inicioErrors(),msg=document.querySelector("#inicioValidation");
+ [["inicioCep",state.inicio?.cep&& !cepValid(state.inicio.cep)],
+  ["inicioLat",state.inicio?.latitude&& !coordValid(state.inicio.latitude,-90,90)],
+  ["inicioLon",state.inicio?.longitude&& !coordValid(state.inicio.longitude,-180,180)]].forEach(([id,bad])=>{
+   let el=document.querySelector("#"+id);if(el)el.classList.toggle("field-invalid",!!bad);
+ });
+ if(msg){msg.textContent=errors.join(" ");msg.classList.toggle("validation-error",errors.length>0)}
+}
+function parseBRNumber(v){
+ let s=String(v??"").trim();
+ if(!s)return NaN;
+ if(s.includes(",") && s.includes(".")) s=s.replace(/\./g,"").replace(",",".");
+ else s=s.replace(",",".");
+ return Number(s);
+}
+function valorMonetarioPorExtenso(v){
+let n=parseBRNumber(String(v??'').replace(/^R\\$\\s*/i,''));if(!Number.isFinite(n)||n<0)return '';
+n=Math.round(n*100)/100;let i=Math.floor(n),c=Math.round((n-i)*100);
+const a=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze'];
+a.push('dezesseis','dezessete','dezoito','dezenove');
+const d=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+const h=['','cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+function x(k){if(k===0)return 'zero';if(k===100)return 'cem';let r=[];if(k>=100){r.push(h[Math.floor(k/100)]);k%=100;}if(k){if(r.length)r.push('e');if(k<20)r.push(a[k]);else{r.push(d[Math.floor(k/10)]);if(k%10)r.push('e',a[k%10]);}}return r.join(' ')}
+function q(k){if(k<1000)return x(k);let z=[];let m=Math.floor(k/1000000),t=Math.floor((k%1000000)/1000),u=k%1000;if(m)z.push(m===1?'um milhão':x(m)+' milhões');if(t)z.push((t===1?'mil':x(t)+' mil'));if(u)z.push(x(u));return z.join(' e ')}
+let r=q(i)+' '+(i===1?'real':'reais');if(c)r+=' e '+x(c)+' '+(c===1?'centavo':'centavos');return r;}
+function roundedMarketValue(v){
+ let n=parseBRNumber(v);
+ if(!Number.isFinite(n) || n===0)return Number.isFinite(n)?"0.00":"";
+ // Arredondamento automático por ordem de grandeza (aprox. 3 algarismos significativos),
+ // mantendo a diferença bem abaixo do limite de 1%.
+ let step=Math.pow(10,Math.max(0,Math.floor(Math.log10(Math.abs(n)))-2));
+ return (Math.round(n/step)*step).toFixed(2);
+}
+function activeCharacterization(){
+ const t=String(state.inicio?.tipologia||"").trim();
+ if(t==="Apartamento"){
+   return {tipologia:t,form:"carac",data:state.carac||{},areaAvaliacao:state.carac?.areaAdotada||"",areaTerreno:""};
+ }
+ if(t==="Galpão"){
+   return {tipologia:t,form:"galpao",data:state.galpao||{},areaAvaliacao:state.galpao?.areaAvalianda||"",areaTerreno:state.galpao?.areaTerrenoAdotada||""};
+ }
+ if(/^Terreno\b/i.test(t)){
+   return {tipologia:t,form:"terreno",data:state.terreno||{},areaAvaliacao:state.terreno?.areaTerrenoAdotada||"",areaTerreno:state.terreno?.areaTerrenoAdotada||""};
+ }
+ return {tipologia:t,form:null,data:{},areaAvaliacao:"",areaTerreno:""};
+}
+function valuationInputs(){
+ const c=activeCharacterization();
+ return {areaAvaliacao:c.areaAvaliacao,areaTerreno:c.areaTerreno,vuAdotado:state.metodados?.vuAdotado||""};
+}
+function syncResultado(){
+ if(!state.resultado)state.resultado={};
+ const input=valuationInputs();
+ const vu=input.vuAdotado,area=input.areaAvaliacao;
+ state.resultado.vu=String(vu??"").trim();
+ state.resultado.areaAdotada=String(area??"").trim();
+ let nvu=parseBRNumber(vu),na=parseBRNumber(area);
+ if(Number.isFinite(nvu)&&Number.isFinite(na)&&String(vu??"").trim()!==""&&String(area??"").trim()!==""){
+   state.resultado.valorCalculado=(nvu*na).toFixed(2);
+   state.resultado.valorArredondado=roundedMarketValue(state.resultado.valorCalculado);
+ }else{
+   state.resultado.valorCalculado="";
+   state.resultado.valorArredondado="";
+ }
+ const adopted=document.getElementById("resMcAdotado");
+ if(adopted && adopted.dataset.userEdited)state.resultado.vm=String(adopted.value||"").trim();
+ else if(state.resultado.valorArredondado)state.resultado.vm=state.resultado.valorArredondado;
+ else state.resultado.vm="";
+ state.resultado.valorMercado=state.resultado.vm||"";
+ ["vu","areaAdotada","valorCalculado","valorArredondado"].forEach(k=>{
+   let el=document.querySelector(`[data-form="resultado"][data-key="${k}"]`);
+   if(el)el.value=state.resultado[k]??"";
+ });
+}
+
+const FINALIDADE_REGRAS={
+ "Garantia de composição de dívidas":{objetivo:"Valor de Mercado + VLI",objetivoFixo:true}
+};
+function applyFinalidadeRules(){
+ const f=document.querySelector('[data-form="inicio"][data-key="finalidade"]');
+ const o=document.querySelector('[data-form="inicio"][data-key="objetivo"]');
+ if(!f||!o)return;
+ const regra=FINALIDADE_REGRAS[String(f.value||"").trim()];
+ if(regra?.objetivo){
+   o.value=regra.objetivo; state.inicio.objetivo=regra.objetivo;
+ }
+ o.disabled=!!regra?.objetivoFixo;
+}
+function ensureRestricoes(){
+ state.galpao=state.galpao||{};
+ if(!Array.isArray(state.galpao.restricoesLista)){
+   state.galpao.restricoesLista=[];
+   if(String(state.galpao.restricoes||"").trim() && state.galpao.restricoes!=="Nenhuma"){
+     state.galpao.restricoesLista.push({id:uid(),tipo:state.galpao.restricoes,area:state.galpao.areaRestricao||""});
+   }
+ }
+}
+function renderRestricoesTerreno(){
+ const box=document.getElementById("restricoesTerreno"); if(!box)return;
+ ensureRestricoes(); box.innerHTML="";
+ state.galpao.restricoesLista.forEach((r,i)=>{
+   const row=document.createElement("div");row.className="restriction-item";
+   row.innerHTML=`<label>Restrição ${i+1}<input data-rid="${r.id}" data-rfield="tipo" value="${esc(r.tipo||"")}"></label>
+   <label>Área impactada (m²)<input type="text" inputmode="decimal" class="numberBR" data-rid="${r.id}" data-rfield="area" value="${esc(r.area||"")}"></label>
+   <button type="button" data-rdel="${r.id}">Remover</button>`;
+   box.appendChild(row);
+ });
+ box.querySelectorAll("[data-rid][data-rfield]").forEach(el=>el.oninput=()=>{
+   const r=state.galpao.restricoesLista.find(x=>x.id===el.dataset.rid);if(r)r[el.dataset.rfield]=el.value;
+   state.meta.updated=new Date().toISOString();
+ });
+ box.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>{
+   state.galpao.restricoesLista=state.galpao.restricoesLista.filter(x=>x.id!==b.dataset.rdel);renderRestricoesTerreno();
+ });
+}
+function initRestricoesTerreno(){
+ const b=document.getElementById("addRestricaoTerreno");
+ if(b)b.onclick=()=>{ensureRestricoes();state.galpao.restricoesLista.push({id:uid(),tipo:"",area:""});renderRestricoesTerreno();};
+ renderRestricoesTerreno();
+}
+function bindForms(){
+ document.querySelectorAll("[data-form][data-key]").forEach(el=>{
+   let f=el.dataset.form,k=el.dataset.key;
+   el.value=formVal(f,k);
+   if(el.id==="inicioCep")formatCepInput(el);
+   el.oninput=el.onchange=()=>{
+     if(el.id==="inicioCep")formatCepInput(el);
+     if(!state[f])state[f]={};
+     state[f][k]=el.value; state.meta.updated=new Date().toISOString(); if(f==="docs")syncDocFileControls(); if(f==="inicio"&&k==="finalidade")applyFinalidadeRules(); syncResultado(); paintInicioValidation(); paintRequired(); updateReview();
+   };
+ });
+ applyFinalidadeRules();
+ renderRestricoesTerreno();
+ let uf=document.querySelector("#inicioUf");
+ if(uf && uf.options.length===0){
+   uf.innerHTML='<option value=""></option>'+ufs.map(x=>`<option>${x}</option>`).join("");
+   uf.value=formVal("inicio","uf");
+ }
+ syncResultado();paintInicioValidation();paintRequired();
+}
+function sectionComplete(obj,keys){return keys.every(k=>String(obj?.[k]??"").trim()!=="")}
+function sectionStarted(obj){return Object.values(obj||{}).some(v=>String(v??"").trim()!=="")}
+function methodologyStarted(){return state.vars.some(v=>String(v.name||v.transform||v.desc||v.subject||v.impact||"").trim()!=="")}
+function tabStatusesOriginal(){
+ const iniReq=["os","numeroLaudo","dataVistoria","dataBase","objetivo","finalidade","tipologia","uso","condicaoVistoria","acessoInterior","proprietario","endereco","municipio","uf","cep","matricula","cartorio","latitude","longitude"];
+ const locReq=["usoPred","ocupacao","padrao","densidade","acessoViario","transportePublico","estacionamento","viasPrincipais","rodovias","trilhos","agua","esgoto","energia","iluminacao","pavimentacao","drenagem","dados","gas","comercioExiste","comercioObs","escolasExiste","escolasObs","saudeExiste","saudeObs","lazerExiste","lazerObs","shoppingExiste","shoppingObs","metroExiste","metroObs","irregularExiste","irregularObs","outroExiste","outroObs"];
+ let carReq=["areaMatricula","naoAverbada","areaAdotada","dormitorios","suites","banheiros","vagas","andar","piscina","academia","salaoFestas","churrasqueira","playground","quadra","salaoJogos","gourmet","outroLazer","impRegularizacao","impAcesso","docVistoria"];
+ if(state.carac?.impRegularizacao==="Sim")carReq.push("motivoRegularizacao");
+ if(state.carac?.impAcesso==="Sim")carReq.push("motivoAcesso");
+ if(state.carac?.docVistoria==="Não")carReq.push("divergencias");
+ const metReq=["metodo","totalDados","dadosUtilizados","totalVariaveis","variaveisUtilizadas","equacao","r2","r2aj","vuCentral","limInf","limSup","vuAdotado","grauFund","grauPrecisao"];
+ const resReq=["vu","areaAdotada","valorCalculado","valorArredondado","adotar","vm"];
+ const diagReq=["desempenho","demanda","ofertas","liquidez","prazo"];
+ const iniciadas=state.samples.filter(started), amComplete=iniciadas.length>0&&iniciadas.every(complete);
+ let metBase=sectionComplete(state.metodados,metReq)&&methodReady();
+ return {
+   inicio:inicioErrors().length?"error":sectionComplete(state.inicio,iniReq)?"complete":sectionStarted(state.inicio)?"progress":"empty",
+   local:sectionComplete(state.local,locReq)?"complete":sectionStarted(state.local)?"progress":"empty",
+   carac:sectionComplete(state.carac,carReq)?"complete":sectionStarted(state.carac)?"progress":"empty",
+   met:metodologiaErrors().length?"error":metBase?"complete":(sectionStarted(state.metodados)||methodologyStarted())?"progress":"empty",
+   amos:amComplete?"complete":iniciadas.length?"progress":"empty",
+   resultado:sectionComplete(state.resultado,resReq)?"complete":sectionStarted(state.resultado)?"progress":"empty",
+   diag:sectionComplete(state.diag,diagReq)?"complete":sectionStarted(state.diag)?"progress":"empty",
+   obs:sectionStarted(state.observacoes)?"complete":"empty",
+   docs:sectionComplete(state.encerramento,["local","dataEmissao","empresa","representante","cpf","responsavel","crea"])?"complete":(sectionStarted(state.docs)||sectionStarted(state.encerramento))?"progress":"empty"
+ };
+}
+function tabStatuses(){
+ const sts=tabStatusesOriginal();
+ if(PROTOTYPE_NO_REQUIRED){
+   Object.keys(sts).forEach(k=>{ if(sts[k]!=="error") sts[k]="complete"; });
+ }
+ return sts;
+}
+function updateTabStatus(){
+ const sts=tabStatuses();
+ Object.entries(sts).forEach(([tab,status])=>{
+   let b=document.querySelector(`[data-tab="${tab}"]`);if(!b)return;
+   b.classList.remove("status-empty","status-progress","status-complete","status-error");
+   b.classList.add("status-"+status);
+   b.title=status==="complete"?"Etapa completa":status==="error"?"Há dados inválidos nesta etapa":status==="progress"?"Etapa iniciada com pendências":"Etapa não iniciada";
+ });
+ // Anexo é saída/conferência, não etapa de preenchimento.
+ let ab=document.querySelector('[data-tab="anexo"]');
+ if(ab){ab.classList.remove("status-empty","status-progress","status-complete");ab.title="Conferência do Anexo I";}
+ const required=["inicio","local","carac","met","amos","resultado","diag","docs"],ready=required.every(k=>sts[k]==="complete");
+ let bar=document.querySelector("#emissionBar"),txt=document.querySelector("#emissionState");
+ if(bar){bar.classList.toggle("ready",ready);bar.classList.toggle("pending",!ready)}
+ if(txt)txt.textContent=ready?"LIBERADA":"PENDENTE";
+}
+function updateReview(){updateTabStatus()}
+function variableUsesClassification(v){
+ return ["Qualitativa","Dicotômica","Código alocado","Código ajustado"].includes(String(v?.type||""));
+}
+function renderVars(){
+ const el=document.querySelector("#vars"); el.innerHTML="";
+ state.vars.forEach((v,i)=>{
+  if(!Array.isArray(v.classes))v.classes=[];
+  const d=document.createElement("div"); d.className="grid"; d.style.marginBottom="14px";
+  let classHtml="";
+  if(variableUsesClassification(v)){
+    classHtml=`<div class="classbox">
+      <label>Classificação adotada <span class="badge">uso específico desta avaliação</span></label>
+      <div class="muted">Defina o código numérico utilizado no modelo e o significado correspondente.</div>
+      <div data-classlist="${v.id}">
+      ${v.classes.map(c=>`<div class="classrow">
+        <div><label>Código</label><input inputmode="decimal" data-v="${v.id}" data-c="${c.id}" data-cf="code" value="${esc(c.code)}"></div>
+        <div><label>Descrição</label><input data-v="${v.id}" data-c="${c.id}" data-cf="label" value="${esc(c.label)}"></div>
+        <button data-delc="${v.id}:${c.id}">Remover</button>
+      </div>`).join("")}
+      </div>
+      <button style="margin-top:8px" data-addc="${v.id}">Adicionar classificação</button>
+    </div>`;
+  }
+  d.innerHTML=`<div><label>Variável ${i+1} – Nome</label><input data-v="${v.id}" data-f="name" value="${esc(v.name)}"></div>
+  <div><label>Tipo</label><select data-v="${v.id}" data-f="type"><option ${v.type==="Quantitativa"?"selected":""}>Quantitativa</option><option ${v.type==="Dicotômica"?"selected":""}>Dicotômica</option><option ${v.type==="Proxy"?"selected":""}>Proxy</option><option ${v.type==="Código alocado"?"selected":""}>Código alocado</option><option ${v.type==="Código ajustado"?"selected":""}>Código ajustado</option><option ${v.type==="Qualitativa"?"selected":""}>Qualitativa</option></select></div>
+  <div><label>Transformação</label><select data-v="${v.id}" data-f="transform">
+    ${["","x","1/x","x²","1/x²","x³","1/x³","ln(x)","1/ln(x)","√x","1/√x","e^x","Dummies / códigos"].map(t=>`<option value="${esc(t)}" ${v.transform===t?"selected":""}>${esc(t)}</option>`).join("")}
+  </select></div>
+  <div><label>Valor do avaliando</label><input data-v="${v.id}" data-f="subject" value="${esc(v.subject)}" inputmode="decimal"></div>
+  <div><label>Impacto sobre o modelo</label><select data-v="${v.id}" data-f="impact"><option value=""></option><option ${v.impact==="Positivo"?"selected":""}>Positivo</option><option ${v.impact==="Negativo"?"selected":""}>Negativo</option></select></div>
+  <div style="grid-column:span 3"><label>Descrição da variável</label><textarea data-v="${v.id}" data-f="desc">${esc(v.desc)}</textarea></div>
+  <div><label>&nbsp;</label><button data-delv="${v.id}">Remover variável</button></div>${classHtml}`;
+  el.appendChild(d);
+ });
+ el.querySelectorAll("[data-v][data-f]").forEach(x=>{
+ x.onfocus=()=>{x.dataset.old=x.value};
+ x.onchange=()=>{
+   let v=state.vars.find(v=>v.id===x.dataset.v), old=x.dataset.old??v[x.dataset.f];
+   if(x.dataset.f==="type" && hasStartedSamples() && old!==x.value){
+     if(!confirm("Já existem amostras iniciadas. Alterar o tipo da variável pode invalidar dados já preenchidos. Deseja continuar?")){
+       x.value=old; return;
+     }
+   }
+   v[x.dataset.f]=x.value;
+   if(x.dataset.f==="type")renderVars();
+   renderSamples();renderAnnex();updateMethodGate();
+ };
+});
+ el.querySelectorAll("[data-v][data-c]").forEach(x=>x.oninput=()=>{
+   let v=state.vars.find(v=>v.id===x.dataset.v),c=v.classes.find(c=>c.id===x.dataset.c);
+   c[x.dataset.cf]=x.value; updateMethodGate();
+   // Não recria a própria tela de metodologia durante a digitação.
+   // Amostras/Anexo serão atualizados ao navegar ou concluir a edição.
+});
+ el.querySelectorAll("[data-addc]").forEach(x=>x.onclick=()=>{let v=state.vars.find(v=>v.id===x.dataset.addc);v.classes.push({id:uid(),code:"",label:""});renderVars();renderSamples();renderAnnex()});
+ el.querySelectorAll("[data-delc]").forEach(x=>x.onclick=()=>{let [vid,cid]=x.dataset.delc.split(":");let v=state.vars.find(v=>v.id===vid);v.classes=v.classes.filter(c=>c.id!==cid);renderVars();renderSamples();renderAnnex()});
+ el.querySelectorAll("[data-delv]").forEach(x=>x.onclick=()=>{
+ if(hasStartedSamples() && !confirm("Já existem amostras iniciadas. Excluir esta variável removerá sua estrutura da avaliação e poderá descartar dados associados. Deseja continuar?"))return;
+ state.vars=state.vars.filter(v=>v.id!==x.dataset.delv);renderVars();renderSamples();renderAnnex();updateMethodGate();updateTabStatus();bindForms();
+});
+}
+function methodIssues(){
+ let issues=[];
+ if(state.vars.length===0)return ["Cadastre pelo menos uma variável."];
+ state.vars.forEach((v,i)=>{
+   let p="Variável "+(i+1)+": ";
+   if(!String(v.name||"").trim())issues.push(p+"Nome");
+   if(!String(v.type||"").trim())issues.push(p+"Tipo");
+   if(!String(v.transform||"").trim())issues.push(p+"Transformação");
+   if(!String(v.desc||"").trim())issues.push(p+"Descrição");
+   if(!String(v.subject||"").trim())issues.push(p+"Valor do avaliando");
+   if(!String(v.impact||"").trim())issues.push(p+"Impacto sobre o modelo");
+   if(variableUsesClassification(v)){
+     let cls=Array.isArray(v.classes)?v.classes:[];
+     if(cls.length===0)issues.push(p+"Classificação adotada");
+     else {
+       cls.forEach((c,j)=>{
+         if(!String(c.code||"").trim()||!String(c.label||"").trim())
+           issues.push(p+"Classificação "+(j+1)+" incompleta");
+       });
+       let codes=cls.map(c=>String(c.code||"").trim()).filter(Boolean);
+       if(new Set(codes).size!==codes.length)issues.push(p+"Códigos de classificação duplicados");
+     }
+   }
+ });
+ return issues;
+}
+function methodReady(){return methodIssues().length===0}
+function hasStartedSamples(){return state.samples.some(started)}
+function updateMethodGate(){
+ const tab=document.querySelector("#tabAmostras"), block=document.querySelector("#methodBlock");
+ let issues=methodIssues(), ready=issues.length===0;
+ tab.classList.toggle("locked",!ready);
+ tab.title=ready?"":"Conclua a Metodologia antes de preencher as Amostras.";
+ if(block){
+   block.classList.toggle("hidden",ready);
+   document.querySelector("#methodBlockMsg").textContent=ready?"":
+     "Conclua a Metodologia. Pendências: "+issues.join("; ")+".";
+ }
+}
+function blankSample(){return {id:uid(),endereco:"",municipio:"",uf:"",fonte:"",data:"",lat:"",lon:"",area:"",valor:"",vars:{}}}
+function num(v){if(typeof v==="number")return v; let s=String(v??"").trim().replace(",","."); return s===""?NaN:Number(s)}
+function validDate(v){if(!v)return false; let d=new Date(v+"T00:00:00"); return !isNaN(d)}
+function started(s){return fixed.some(([k])=>String(s[k]??"").trim()!=="")||state.vars.some(v=>String(s.vars[v.id]??"").trim()!=="")}
+function complete(s){
+ if(!started(s))return false;
+ if(!s.endereco||!s.municipio||!s.uf||!s.fonte||!validDate(s.data))return false;
+ let la=num(s.lat),lo=num(s.lon),a=num(s.area),val=num(s.valor);
+ if(!(la>=-34&&la<=6&&lo>=-74&&lo<=-34&&a>0&&val>0))return false;
+ return state.vars.filter(v=>v.name.trim()).every(v=>{
+   let raw=String(s.vars[v.id]??"").trim(); if(raw==="")return false;
+   if(variableUsesClassification(v) && Array.isArray(v.classes) && v.classes.some(c=>String(c.code).trim()!=="")){
+     return v.classes.some(c=>String(c.code).trim()===raw);
+   }
+   return !isNaN(num(raw));
+ });
+}
+function pendingFields(s){
+ let p=[];
+ if(!s.endereco)p.push("Endereço");
+ if(!s.municipio)p.push("Município");
+ if(!s.uf)p.push("UF");
+ if(!s.fonte)p.push("Fonte");
+ if(!validDate(s.data))p.push("Data");
+ let la=num(s.lat),lo=num(s.lon),a=num(s.area),val=num(s.valor);
+ if(!(la>=-34&&la<=6))p.push("Latitude");
+ if(!(lo>=-74&&lo<=-34))p.push("Longitude");
+ if(!(a>0))p.push("Área");
+ if(!(val>0))p.push("Valor total");
+ state.vars.filter(v=>v.name.trim()).forEach(v=>{
+   let raw=String(s.vars[v.id]??"").trim();
+   if(raw==="")p.push(v.name);
+   else if(variableUsesClassification(v) && Array.isArray(v.classes) && v.classes.some(c=>String(c.code).trim()!=="")){
+     if(!v.classes.some(c=>String(c.code).trim()===raw))p.push(v.name);
+   } else if(isNaN(num(raw)))p.push(v.name);
+ });
+ return p;
+}
+function fmtCoord(v){let n=num(v);return isNaN(n)?"":n.toFixed(7)}
+function vu(s){let a=num(s.area),v=num(s.valor);return a>0&&v>0?(v/a).toFixed(2):""}
+function renderSamples(){
+ const h=document.querySelector("#sampleHead");
+ h.innerHTML=["ID",...fixed.map(x=>x[1]),"VU (R$/m²)",...state.vars.filter(v=>v.name.trim()).map(v=>v.name),"Status","Pendências",""].map(x=>`<th>${esc(x)}</th>`).join("");
+ const b=document.querySelector("#sampleBody"); b.innerHTML="";
+ state.samples.forEach((s,i)=>{
+  let tr=document.createElement("tr"); let st=started(s),co=complete(s); tr.className=st?(co?"completa":"incompleta"):"";
+  let cells=[`<td>AM${String(i+1).padStart(3,"0")}</td>`];
+  fixed.forEach(([k,label])=>{
+   if(k==="uf") cells.push(`<td><select data-s="${s.id}" data-k="${k}"><option></option>${ufs.map(u=>`<option ${s.uf===u?"selected":""}>${u}</option>`).join("")}</select></td>`);
+   else if(k==="data") cells.push(`<td><input type="date" data-s="${s.id}" data-k="${k}" value="${esc(s[k])}"></td>`);
+   else cells.push(`<td><input data-s="${s.id}" data-k="${k}" value="${esc(s[k])}" ${["lat","lon","area","valor"].includes(k)?'inputmode="decimal"':""}></td>`);
+  });
+  cells.push(`<td data-vu>${vu(s)}</td>`);
+  state.vars.filter(v=>v.name.trim()).forEach(v=>{
+   let current=String(s.vars[v.id]??"");
+   if(variableUsesClassification(v) && Array.isArray(v.classes) && v.classes.some(c=>String(c.code).trim()!=="")){
+     cells.push(`<td><select data-s="${s.id}" data-var="${v.id}"><option value=""></option>${
+       v.classes.filter(c=>String(c.code).trim()!=="").map(c=>`<option value="${esc(c.code)}" ${current===String(c.code)?"selected":""}>${esc(c.code)} – ${esc(c.label)}</option>`).join("")
+     }</select></td>`);
+   } else {
+     cells.push(`<td><input data-s="${s.id}" data-var="${v.id}" value="${esc(current)}" inputmode="decimal"></td>`);
+   }
+ });
+  let pend=pendingFields(s);
+  cells.push(`<td class="status">${!st?"":co?"COMPLETA":"INCOMPLETA"}</td>
+  <td class="pendingCell">${!st?"":co?'<span class="oktxt">Sem pendências</span>':`<span class="pend">${esc(pend.join(", "))}</span>`}</td>
+  <td><button data-dups="${s.id}">Duplicar</button> <button data-dels="${s.id}">Excluir</button></td>`);
+  tr.innerHTML=cells.join(""); b.appendChild(tr);
+ });
+ b.querySelectorAll("[data-s]").forEach(x=>{
+   const sync=()=>{
+     let s=state.samples.find(s=>s.id===x.dataset.s);
+     if(x.dataset.var)s.vars[x.dataset.var]=x.value; else s[x.dataset.k]=x.value;
+     // Atualiza apenas os elementos derivados da própria linha, sem reconstruir os inputs.
+     let tr=x.closest("tr"), idx=state.samples.indexOf(s), st=started(s), co=complete(s);
+     tr.className=st?(co?"completa":"incompleta"):"";
+     let statusCell=tr.querySelector(".status");
+     if(statusCell)statusCell.textContent=!st?"":co?"COMPLETA":"INCOMPLETA";
+     let pc=tr.querySelector(".pendingCell"), pend=pendingFields(s);
+     if(pc)pc.innerHTML=!st?"":co?'<span class="oktxt">Sem pendências</span>':`<span class="pend">${esc(pend.join(", "))}</span>`;
+     let vuCell=tr.querySelector("[data-vu]");
+     if(vuCell)vuCell.textContent=vu(s);
+     updateKpis();
+     renderAnnex();
+   };
+   x.addEventListener("input",sync);
+   x.addEventListener("change",sync);
+ });
+ b.querySelectorAll("[data-dels]").forEach(x=>x.onclick=()=>{state.samples=state.samples.filter(s=>s.id!==x.dataset.dels);renderSamples();renderAnnex()});
+ b.querySelectorAll("[data-dups]").forEach(x=>x.onclick=()=>{
+   let original=state.samples.find(s=>s.id===x.dataset.dups);
+   let copy=JSON.parse(JSON.stringify(original)); copy.id=uid();
+   let pos=state.samples.indexOf(original); state.samples.splice(pos+1,0,copy);
+   renderSamples();renderAnnex();
+ });
+ updateKpis();
+}
+function updateKpis(){
+ let ini=state.samples.filter(started).length, comp=state.samples.filter(complete).length, pend=ini-comp;
+ document.querySelector("#ki").textContent=ini;document.querySelector("#kc").textContent=comp;document.querySelector("#kp").textContent=pend;
+ document.querySelector("#ks").textContent=ini===0?"SEM AMOSTRAS":pend?"PREENCHIMENTO INCOMPLETO":"PREENCHIMENTO COMPLETO";
+}
+function renderAnnex(){
+ let vars=state.vars.filter(v=>v.name.trim());
+ document.querySelector("#annHead").innerHTML=["ID",...fixed.map(x=>x[1]),"VU (R$/m²)",...vars.map(v=>v.name)].map(x=>`<th>${esc(x)}</th>`).join("");
+ let b=document.querySelector("#annBody");b.innerHTML="";
+ state.samples.forEach((s,i)=>{if(!complete(s))return;let vals=[`AM${String(i+1).padStart(3,"0")}`,s.endereco,s.municipio,s.uf,s.fonte,s.data,fmtCoord(s.lat),fmtCoord(s.lon),s.area,s.valor,vu(s),...vars.map(v=>s.vars[v.id]??"")];
+ let tr=document.createElement("tr");tr.innerHTML=vals.map(v=>`<td>${esc(v)}</td>`).join("");b.appendChild(tr)});
+ let ini=state.samples.filter(started).length, comp=state.samples.filter(complete).length, pend=ini-comp;
+ document.querySelector("#annCount").textContent=comp;
+ document.querySelector("#annVars").textContent=vars.length;
+ document.querySelector("#annPend").textContent=pend;
+ document.querySelector("#annPdf").textContent=(comp>0&&pend===0)?"LIBERADO":"BLOQUEADO";
+}
+document.querySelector("#addVar").onclick=()=>{
+ if(state.vars.length>=8)return alert("Limite de 8 variáveis.");
+ if(hasStartedSamples() && !confirm("Já existem amostras iniciadas. Adicionar uma nova variável tornará essas amostras incompletas até que o novo campo seja preenchido. Deseja continuar?"))return;
+ state.vars.push({id:uid(),name:"",type:"Quantitativa",transform:"",subject:"",impact:"",desc:"",classes:[]});
+ renderVars();renderSamples();renderAnnex();updateMethodGate();
+};
+
+let sampleImport={headers:[],rows:[]};
+const fixedAliases={
+ endereco:["endereco","endereço","endereco identificacao","endereço identificação","logradouro"],
+ municipio:["municipio","município","cidade"],
+ uf:["uf","estado"],
+ fonte:["fonte"],
+ data:["data","data pesquisa","data da pesquisa"],
+ lat:["latitude","lat"],
+ lon:["longitude","lon","long"],
+ area:["area","área","area m2","área m2","area privativa","área privativa"],
+ valor:["valor total","valor","valor total r$","preco","preço"]
+};
+function normHeader(s){return String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();}
+function autoHeaderFor(field,label,headers){
+ const targets=[normHeader(label),...(fixedAliases[field]||[]).map(normHeader)];
+ let exact=headers.find(h=>targets.includes(normHeader(h)));
+ if(exact)return exact;
+ // Variáveis: somente nome exatamente igual após normalização.
+ if(field.startsWith("var:")){
+   const vn=normHeader(label);
+   return headers.find(h=>normHeader(h)===vn)||"";
+ }
+ return "";
+}
+function importTargets(){
+ return [
+  ...fixed.map(([k,l])=>({key:k,label:l,type:"fixed"})),
+  ...state.vars.filter(v=>v.name.trim()).map(v=>({key:"var:"+v.id,label:v.name,type:"var"}))
+ ];
+}
+function renderSampleMapping(){
+ const body=document.querySelector("#sampleMapBody"),targets=importTargets(),hs=sampleImport.headers;
+ body.innerHTML=targets.map(t=>{
+   let auto=autoHeaderFor(t.key,t.label,hs);
+   let preview=auto?sampleImport.rows.slice(0,3).map(r=>r[auto]).filter(v=>v!==undefined&&v!=="").join(" | "):"";
+   return `<tr><td><b>${esc(t.label)}</b></td><td><select data-map-target="${esc(t.key)}"><option value="">Ignorar</option>${hs.map(h=>`<option value="${esc(h)}" ${h===auto?"selected":""}>${esc(h)}</option>`).join("")}</select></td><td data-preview="${esc(t.key)}">${esc(preview)}</td></tr>`;
+ }).join("");
+ body.querySelectorAll("[data-map-target]").forEach(sel=>sel.onchange=()=>{
+   const p=body.querySelector(`[data-preview="${CSS.escape(sel.dataset.mapTarget)}"]`);
+   if(p)p.textContent=sel.value?sampleImport.rows.slice(0,3).map(r=>r[sel.value]).filter(v=>v!==undefined&&v!=="").join(" | "):"";
+ });
+}
+document.querySelector("#importSamples").onclick=()=>{
+ if(!methodReady())return alert("Conclua a Metodologia antes de importar amostras.");
+ document.querySelector("#fileSamples").click();
+};
+document.querySelector("#fileSamples").onchange=async e=>{
+ const f=e.target.files?.[0]; if(!f)return;
+ try{
+   if(!window.XLSX)throw new Error("O módulo de leitura de planilhas não foi carregado.");
+   const data=await f.arrayBuffer(),wb=XLSX.read(data,{type:"array",cellDates:true});
+   const ws=wb.Sheets[wb.SheetNames[0]];
+   const rows=XLSX.utils.sheet_to_json(ws,{defval:"",raw:false});
+   if(!rows.length)throw new Error("A primeira planilha não possui linhas de dados.");
+   sampleImport={headers:Object.keys(rows[0]),rows};
+   document.querySelector("#sampleImportInfo").textContent=`Arquivo: ${f.name} | ${rows.length} linha(s) encontrada(s).`;
+   renderSampleMapping();document.querySelector("#sampleImportPanel").classList.remove("hidden");
+ }catch(err){alert("Não foi possível ler o arquivo.\n\n"+(err?.message||err));}
+ e.target.value="";
+};
+document.querySelector("#cancelSampleImport").onclick=()=>document.querySelector("#sampleImportPanel").classList.add("hidden");
+document.querySelector("#confirmSampleImport").onclick=()=>{
+ const maps={};
+ document.querySelectorAll("[data-map-target]").forEach(s=>{if(s.value)maps[s.dataset.mapTarget]=s.value});
+ if(!Object.keys(maps).length)return alert("Associe pelo menos uma coluna antes de importar.");
+ const imported=sampleImport.rows.map(r=>{
+   let s=blankSample();
+   Object.entries(maps).forEach(([target,col])=>{
+     let val=r[col]??"";
+     if(target.startsWith("var:"))s.vars[target.slice(4)]=String(val).trim();
+     else if(target==="data"){
+       let txt=String(val).trim(),m=txt.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+       s.data=m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:txt;
+     } else s[target]=String(val).trim();
+   });
+   return s;
+ });
+ state.samples.push(...imported);
+ document.querySelector("#sampleImportPanel").classList.add("hidden");
+ renderSamples();renderAnnex();updateReview();
+ alert(`${imported.length} amostra(s) importada(s). Somente os campos associados foram preenchidos; os demais permanecem disponíveis para complemento manual.`);
+};
+
+document.querySelector("#addSample").onclick=()=>{if(!methodReady())return alert("Conclua a Metodologia antes de adicionar amostras.");state.samples.push(blankSample());renderSamples()};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+ if(b.dataset.tab==="amos" && !methodReady()){
+   alert("A guia AMOSTRAS está bloqueada. Conclua todos os campos das variáveis na METODOLOGIA.");
+   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+   document.querySelector('[data-tab="met"]').classList.add("active");
+   document.querySelectorAll(".tabpane").forEach(x=>x.classList.add("hidden"));
+   document.querySelector("#met").classList.remove("hidden");
+   updateMethodGate(); return;
+ }
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ document.querySelectorAll(".tabpane").forEach(x=>x.classList.add("hidden"));
+ document.querySelector("#"+b.dataset.tab).classList.remove("hidden");
+ renderAnnex();updateMethodGate();updateTabStatus();bindForms();
+});
+function projectBlob(){
+ state.meta.updated=new Date().toISOString();
+ return new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+}
+function saveEvaluation(){
+ let a=document.createElement("a"),os=String(state.inicio?.os||"avaliacao").replace(/[^\w-]+/g,"_");
+ a.href=URL.createObjectURL(projectBlob());a.download=`${os}.avaliacao`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function resetSessionForEvaluation(){
+ const blank={
+   version:"20.9.4",
+   meta:{created:new Date().toISOString(),updated:new Date().toISOString()},
+   inicio:{},local:{},carac:{},galpao:{},terreno:{},metodologia:{},metodados:{},
+   evolutivo:{},resultado:{},resultadoEvolutivo:{},diag:{},observacoes:{},docs:{},encerramento:{},
+   vars:[],samples:[]
+ };
+ Object.keys(state).forEach(k=>delete state[k]);
+ Object.assign(state,blank);
+
+ document.querySelectorAll("[data-form][data-key]").forEach(el=>{
+   if(el.type==="checkbox"||el.type==="radio") el.checked=false;
+   else if(el.tagName==="SELECT") el.selectedIndex=0;
+   else el.value="";
+ });
+ ["metodoAvaliacaoUniversal","resMcVU","resMcCalculado","resMcArredondado","resMcAdotado",
+  "resEvTerreno","resEvBenfeitorias","resEvAntesFc","resEvCalculado","resEvArredondado","resEvAdotado","resEvMercado"]
+ .forEach(id=>{const e=document.getElementById(id);if(e){if(e.tagName==="SELECT")e.selectedIndex=0;else e.value=""}});
+
+ try{renderVars()}catch(e){}
+ try{renderSamples()}catch(e){}
+ try{renderAnnex()}catch(e){}
+ try{renderRestricoesTerreno()}catch(e){}
+ try{updateMethodGate()}catch(e){}
+ try{bindForms()}catch(e){}
+ try{applyFinalidadeRules()}catch(e){}
+ try{renderRestricoesTerreno()}catch(e){}
+ // v20.9.1: restaura o valor do estado e sincroniza os botões SIM/NÃO.
+ try{restoreBinaryChoicesFromState()}catch(e){}
+ try{bindDocAttachmentStatus()}catch(e){}
+ try{updateTabStatus()}catch(e){}
+ try{updateDeliveryStatus()}catch(e){}
+
+ // Reset visual tab to Início without assuming panel IDs.
+ const tabs=[...document.querySelectorAll(".tab[data-tab],.tabbtn[data-tab]")];
+ tabs.forEach(b=>b.classList.remove("active"));
+ const start=tabs.find(b=>b.dataset.tab==="inicio");
+ if(start) start.click();
+}
+
+
+function rebuildInterfaceFromLoadedEvaluation(){
+ const savedMethod=String(state.metodologia?.metodoAvaliacao||"").trim();
+ const savedTip=String(state.inicio?.tipologia||"").trim();
+
+ // First bind loaded state to ordinary controls.
+ try{bindForms()}catch(e){}
+
+ // Then explicitly restore the two architectural selectors from the file.
+ const tip=document.querySelector('[data-form="inicio"][data-key="tipologia"]');
+ if(tip)tip.value=savedTip;
+ const method=document.getElementById("metodoAvaliacaoUniversal");
+ if(method)method.value=savedMethod;
+
+ // Reconstruct characterization and methodology after selectors are restored.
+ try{if(typeof v19Reconcile==="function")v19Reconcile()}catch(e){}
+ try{if(typeof v1901ApplyMethod==="function")v1901ApplyMethod()}catch(e){}
+
+ // Legacy prototype/result routines listen to change; fire only after correct values exist.
+ if(tip)tip.dispatchEvent(new Event("change",{bubbles:true}));
+ if(method)method.dispatchEvent(new Event("change",{bubbles:true}));
+
+ // Re-assert file value because no listener may redefine the saved methodology.
+ state.inicio.tipologia=savedTip;
+ state.metodologia=state.metodologia||{};
+ state.metodologia.metodoAvaliacao=savedMethod;
+ if(method)method.value=savedMethod;
+
+ try{if(typeof v19Reconcile==="function")v19Reconcile()}catch(e){}
+ try{if(typeof v1901ApplyMethod==="function")v1901ApplyMethod()}catch(e){}
+ try{if(typeof syncResultado==="function")syncResultado()}catch(e){}
+ try{if(typeof syncUnifiedResult==="function")syncUnifiedResult()}catch(e){}
+ try{if(typeof v1903NormalizeResult==="function")v1903NormalizeResult()}catch(e){}
+ try{if(typeof v1904NormalizeMCDDM==="function")v1904NormalizeMCDDM()}catch(e){}
+ try{updateTabStatus()}catch(e){}
+
+ // Every opened evaluation starts at Início.
+ const start=document.querySelector('.tab[data-tab="inicio"],.tabbtn[data-tab="inicio"]');
+ if(start)start.click();
+}
+
+function loadEvaluationFile(f){
+ if(!f)return;
+ resetSessionForEvaluation();
+ let r=new FileReader();r.onload=()=>{try{
+   let o=JSON.parse(r.result);
+   state.version=o.version||"legado";state.meta=o.meta||{created:new Date().toISOString(),updated:new Date().toISOString()};state.meta.sourceVersion=state.version;
+   state.inicio=o.inicio||{};state.local=o.local||{};state.carac=o.carac||{};state.galpao=o.galpao||{};state.terreno=o.terreno||{};state.metodologia=o.metodologia||{};state.metodados=o.metodados||{};state.evolutivo=o.evolutivo||{};state.resultado=o.resultado||{};state.resultadoEvolutivo=o.resultadoEvolutivo||{};state.diag=o.diag||{};state.observacoes=o.observacoes||{};state.docs=o.docs||{};state.encerramento=o.encerramento||{};
+   state.vars=o.vars||[];state.vars.forEach(v=>{if(!Array.isArray(v.classes))v.classes=[]});
+   state.samples=o.samples||[];
+   ensureRestricoes();
+   renderVars();renderSamples();renderAnnex();renderRestricoesTerreno();updateMethodGate();bindDocAttachmentStatus();setTimeout(()=>window.syncBinaryChoices?.(),0);setTimeout(()=>window.syncBinaryChoices?.(),120);setTimeout(()=>window.syncBinaryChoices?.(),350);setTimeout(()=>{try{restoreBinaryChoicesFromState()}catch(e){}},0);
+   rebuildInterfaceFromLoadedEvaluation();
+ }catch(err){alert("Arquivo de avaliação inválido.")}};r.readAsText(f);
+}
+
+function xmlEsc(v){
+ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function colName(n){let s="";while(n){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26)}return s}
+function sheetXml(rows){
+ let body=rows.map((r,ri)=>`<row r="${ri+1}">`+r.map((v,ci)=>{
+   let ref=colName(ci+1)+(ri+1);
+   if(typeof v==="number" && Number.isFinite(v))return `<c r="${ref}"><v>${v}</v></c>`;
+   return `<c r="${ref}" t="inlineStr"><is><t>${xmlEsc(v)}</t></is></c>`;
+ }).join("")+"</row>").join("");
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+ <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${body}</sheetData></worksheet>`;
+}
+function crc32(bytes){
+ let table=crc32.table||(crc32.table=(()=>{let t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})());
+ let c=0xFFFFFFFF;for(let b of bytes)c=table[(c^b)&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;
+}
+function u16(n){return [n&255,(n>>>8)&255]}
+function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function zipStore(files){
+ const enc=new TextEncoder(), parts=[], central=[]; let offset=0;
+ files.forEach(f=>{
+   let name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+   let local=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+     ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name]);
+   parts.push(local,data);
+   let cen=new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+     ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...name]);
+   central.push(cen); offset+=local.length+data.length;
+ });
+ let centralSize=central.reduce((a,b)=>a+b.length,0),centralOffset=offset;
+ let end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),
+   ...u32(centralSize),...u32(centralOffset),...u16(0)]);
+ return new Blob([...parts,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+function buildXlsx(){
+ let vars=state.vars.filter(v=>v.name.trim());
+ let metodologia=[["Ordem","Nome","Tipo","Transformação","Descrição","Valor do avaliando"]];
+ vars.forEach((v,i)=>metodologia.push([i+1,v.name,v.type,v.transform||"",v.desc||"",v.subject||""]));
+
+ let classificacoes=[["Variável","Código","Descrição"]];
+ vars.filter(variableUsesClassification).forEach(v=>(v.classes||[]).forEach(c=>{
+   if(String(c.code||"").trim()||String(c.label||"").trim())classificacoes.push([v.name,c.code,c.label]);
+ }));
+
+ let amostras=[["ID","Endereço / identificação","Município","UF","Fonte","Data pesquisa","Latitude","Longitude","Área (m²)","Valor total (R$)","VU (R$/m²)",...vars.map(v=>v.name)]];
+ state.samples.forEach((s,i)=>{
+   if(!complete(s))return;
+   amostras.push(["AM"+String(i+1).padStart(3,"0"),s.endereco,s.municipio,s.uf,s.fonte,s.data,
+     num(s.lat),num(s.lon),num(s.area),num(s.valor),Number(vu(s)),...vars.map(v=>num(s.vars[v.id]))]);
+ });
+
+ let files=[
+ {name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`},
+ {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+ {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="METODOLOGIA" sheetId="1" r:id="rId1"/><sheet name="CLASSIFICACOES" sheetId="2" r:id="rId2"/><sheet name="AMOSTRAS" sheetId="3" r:id="rId3"/></sheets></workbook>`},
+ {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/></Relationships>`},
+ {name:"xl/worksheets/sheet1.xml",data:sheetXml(metodologia)},
+ {name:"xl/worksheets/sheet2.xml",data:sheetXml(classificacoes)},
+ {name:"xl/worksheets/sheet3.xml",data:sheetXml(amostras)}
+ ];
+ return zipStore(files);
+}
+document.querySelector("#exportData").onclick=()=>{
+ const vars=state.vars.filter(v=>v.name.trim()).map((v,i)=>({
+   ordem:i+1,nome:v.name,tipo:v.type,transformacao:v.transform||"",
+   descricao:v.desc||"",valor_avaliando:v.subject||"",
+   classificacoes:(v.classes||[]).filter(c=>String(c.code).trim()!=="").map(c=>({codigo:c.code,descricao:c.label}))
+ }));
+ const amostras=[];
+ state.samples.forEach((s,i)=>{
+   if(!complete(s))return;
+   const vv={};
+   state.vars.filter(v=>v.name.trim()).forEach(v=>{
+     const codigo=s.vars[v.id]??"";
+     let significado="";
+     if(variableUsesClassification(v)){
+       const c=(v.classes||[]).find(c=>String(c.code)===String(codigo));
+       if(c)significado=c.label;
+     }
+     vv[v.name]={valor:codigo,significado};
+   });
+   amostras.push({
+     id:"AM"+String(i+1).padStart(3,"0"),
+     endereco:s.endereco,municipio:s.municipio,uf:s.uf,fonte:s.fonte,
+     data_pesquisa:s.data,latitude:num(s.lat),longitude:num(s.lon),
+     area_m2:num(s.area),valor_total:num(s.valor),vu_m2:Number(vu(s)),
+     variaveis:vv
+   });
+ });
+ const pacote={
+   formato:"POC_LAUDO_AVALIACAO",
+   versao:"0.5",
+   exportado_em:new Date().toISOString(),
+   metodologia:{variaveis:vars},
+   amostras
+ };
+ const blob=new Blob([JSON.stringify(pacote,null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download="dados_estruturados_avaliacao.json";a.click();URL.revokeObjectURL(a.href);
+};
+
+function pdfSafe(s){
+ return String(s??"").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)")
+   .replace(/[^\x20-\x7E\xA0-\xFF]/g," ");
+}
+function win1252Bytes(s){
+ const map={8364:128,8218:130,402:131,8222:132,8230:133,8224:134,8225:135,710:136,8240:137,352:138,8249:139,338:140,381:142,8216:145,8217:146,8220:147,8221:148,8226:149,8211:150,8212:151,732:152,8482:153,353:154,8250:155,339:156,382:158,376:159};
+ let a=[]; for(let ch of s){let c=ch.codePointAt(0); if(c<=255)a.push(c); else if(map[c]!=null)a.push(map[c]); else a.push(32)} return new Uint8Array(a);
+}
+function pdfText(x,y,size,text,bold=false){
+ return `BT /${bold?"F2":"F1"} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${pdfSafe(text)}) Tj ET\n`;
+}
+function fitText(text,width,size){
+ let max=Math.max(1,Math.floor(width/(size*0.52)));
+ text=String(text??""); return text.length<=max?text:text.slice(0,Math.max(1,max-1))+"…";
+}
+function brDate(v){
+ if(!v)return "";
+ let p=String(v).split("-");
+ return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(v);
+}
+function brNum(v,dec=2){
+ let n=num(v); if(!Number.isFinite(n))return "";
+ return n.toLocaleString("pt-BR",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function brMoney(v){
+ let n=num(v); if(!Number.isFinite(n))return "";
+ return "R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function buildAnnexPdf(){
+ const vars=state.vars.filter(v=>v.name.trim());
+ const completeRows=state.samples.map((s,i)=>({s,i})).filter(x=>complete(x.s));
+ const W=842,H=595,ml=22,mr=22,top=46,bottom=28,rowH=18,headH=30,usable=W-ml-mr;
+
+ // Estratégia adaptativa: até 4 variáveis em um bloco; acima disso, divide horizontalmente.
+ const maxVarsPerBlock=4;
+ const blocks=[];
+ if(vars.length===0)blocks.push([]);
+ else for(let i=0;i<vars.length;i+=maxVarsPerBlock)blocks.push(vars.slice(i,i+maxVarsPerBlock));
+
+ // Identificação essencial repetida em todos os blocos.
+ const fixedHeaders=["ID","Endereço / identificação","Município","UF","Fonte","Data pesquisa","Latitude","Longitude","Área (m²)","Valor total (R$)","VU (R$/m²)"];
+
+ const perPage=Math.max(1,Math.floor((H-top-bottom-headH-20)/rowH));
+ const verticalPages=Math.max(1,Math.ceil(completeRows.length/perPage));
+ const totalPages=verticalPages*blocks.length;
+ const pages=[];
+ let pageNo=0;
+
+ blocks.forEach((block,bi)=>{
+   for(let vp=0;vp<verticalPages;vp++){
+     pageNo++;
+     const chunk=completeRows.slice(vp*perPage,(vp+1)*perPage);
+     const headers=[...fixedHeaders,...block.map(v=>v.name)];
+
+     // Pesos desenhados para preservar legibilidade dos campos fixos.
+     let fixedWeights=[0.055,0.155,0.105,0.038,0.085,0.078,0.078,0.078,0.062,0.105,0.075];
+     let fixedSum=fixedWeights.reduce((a,b)=>a+b,0);
+     // Reserva 25% para variáveis quando elas existem.
+     let varShare=block.length?0.25:0;
+     let fixedTarget=1-varShare;
+     let widths=fixedWeights.map(w=>w/fixedSum*fixedTarget*usable);
+     if(block.length)widths.push(...Array(block.length).fill(varShare*usable/block.length));
+
+     let c="";
+     c+=pdfText(ml,H-25,12,"ANEXO I – DADOS AMOSTRAIS",true);
+     c+=pdfText(W-128,H-25,8,`Página ${pageNo} de ${totalPages}`);
+     if(blocks.length>1)c+=pdfText(ml,H-38,7.2,`Variáveis ${bi*maxVarsPerBlock+1} a ${bi*maxVarsPerBlock+block.length} de ${vars.length}`);
+
+     let y=H-top-headH,x=ml;
+     c+="0.92 g\n";
+     for(let j=0;j<headers.length;j++){c+=`${x.toFixed(2)} ${y.toFixed(2)} ${widths[j].toFixed(2)} ${headH} re f\n`;x+=widths[j]}
+     c+="0 g\n";x=ml;
+     for(let j=0;j<headers.length;j++){
+       // Cabeçalho em até duas linhas simples, evitando abreviação agressiva.
+       let text=String(headers[j]), fs=5.8, max=Math.max(2,Math.floor((widths[j]-4)/(fs*0.52)));
+       if(text.length<=max){
+         c+=pdfText(x+2,y+11,fs,text,true);
+       }else{
+         let cut=text.lastIndexOf(" ",max);
+         if(cut<Math.floor(max*0.45))cut=max;
+         let l1=text.slice(0,cut).trim(),l2=text.slice(cut).trim();
+         c+=pdfText(x+2,y+17,fs,fitText(l1,widths[j]-4,fs),true);
+         c+=pdfText(x+2,y+7,fs,fitText(l2,widths[j]-4,fs),true);
+       }
+       x+=widths[j];
+     }
+
+     c+="0.75 G 0.35 w\n";
+     chunk.forEach(({s,i},ri)=>{
+       const r=[
+         "AM"+String(i+1).padStart(3,"0"),s.endereco,s.municipio,s.uf,s.fonte,brDate(s.data),
+         fmtCoord(s.lat),fmtCoord(s.lon),brNum(s.area,2),brMoney(s.valor),brMoney(vu(s)),
+         ...block.map(v=>String(s.vars[v.id]??""))
+       ];
+       let yy=y-(ri+1)*rowH;x=ml;
+       for(let j=0;j<headers.length;j++){
+         c+=`${x.toFixed(2)} ${yy.toFixed(2)} ${widths[j].toFixed(2)} ${rowH} re S\n`;
+         c+=pdfText(x+2,yy+6,5.6,fitText(r[j],widths[j]-4,5.6));
+         x+=widths[j];
+       }
+     });
+     pages.push(c);
+   }
+ });
+
+ let objects=[null];
+ objects.push("<< /Type /Catalog /Pages 2 0 R >>");
+ objects.push("");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+ let pageIds=[];
+ pages.forEach(content=>{
+   let contentId=objects.length,b=win1252Bytes(content);
+   objects.push({stream:b});
+   let pageId=objects.length;
+   objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`);
+   pageIds.push(pageId);
+ });
+ objects[2]=`<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`;
+
+ let chunks=[win1252Bytes("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")],offsets=[0],pos=chunks[0].length;
+ for(let i=1;i<objects.length;i++){
+   offsets[i]=pos;
+   let pre=win1252Bytes(`${i} 0 obj\n`),body;
+   if(objects[i]&&objects[i].stream){
+     let s=objects[i].stream;
+     body=new Uint8Array([...win1252Bytes(`<< /Length ${s.length} >>\nstream\n`),...s,...win1252Bytes("\nendstream")]);
+   }else body=win1252Bytes(objects[i]);
+   let post=win1252Bytes("\nendobj\n");
+   chunks.push(pre,body,post);pos+=pre.length+body.length+post.length;
+ }
+ let xref=pos,xs=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+ for(let i=1;i<objects.length;i++)xs+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+ xs+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+ chunks.push(win1252Bytes(xs));
+ return new Blob(chunks,{type:"application/pdf"});
+}
+document.querySelector("#pdfCheck").onclick=()=>{
+ let iniciadas=state.samples.map((s,i)=>({s,i})).filter(x=>started(x.s));
+ let incompletas=iniciadas.filter(x=>!complete(x.s));
+ let comp=iniciadas.length-incompletas.length,m=document.querySelector("#pdfMsg");
+ if(!methodReady()){m.textContent="PDF BLOQUEADO: conclua a Metodologia.";return;}
+ if(incompletas.length){
+   let ids=incompletas.map(x=>"AM"+String(x.i+1).padStart(3,"0")).join(", ");
+   m.textContent=`PDF BLOQUEADO: existem ${incompletas.length} amostra(s) incompleta(s): ${ids}.`;return;
+ }
+ if(comp===0){m.textContent="PDF BLOQUEADO: não existe nenhuma amostra completa.";return;}
+ let blob=buildAnnexPdf(),a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download="Anexo_I_Dados_Amostrais.pdf";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ m.textContent=`PDF GERADO: ${comp} amostra(s) completa(s) e ${state.vars.filter(v=>v.name.trim()).length} variável(is).`;
+};
+document.querySelector("#exportCsv").onclick=()=>{let vars=state.vars.filter(v=>v.name.trim()),rows=[["ID",...fixed.map(x=>x[1]),"VU (R$/m²)",...vars.map(v=>v.name)]];state.samples.forEach((s,i)=>{if(complete(s))rows.push([`AM${String(i+1).padStart(3,"0")}`,s.endereco,s.municipio,s.uf,s.fonte,s.data,fmtCoord(s.lat),fmtCoord(s.lon),s.area,s.valor,vu(s),...vars.map(v=>s.vars[v.id]??"")])});let csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(";")).join("\n");let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="dados_amostrais.csv";a.click();URL.revokeObjectURL(a.href)};
+state.vars=[];
+
+
+
+function reportLine(label,value,x,y,w=500){
+ let v=String(value??"").trim(); if(!v)v="—";
+ return pdfText(x,y,8.3,`${label}: ${fitText(v,w,8.3)}`);
+}
+function boxTitle(x,y,w,title){
+ return `0.93 g\n${x} ${y-4} ${w} 22 re f\n0 g\n`+pdfText(x+8,y+3,9,title,true);
+}
+function footer(pageW,pageNo,total,laudo){
+ let c="";
+ c+=pdfText(42,8,6.5,`Laudo ${pdfSafe(laudo||"—")}`);
+ return c;
+}
+
+function pdfSectionTitle(x,y,w,n,title){
+ return `0.13 0.32 0.50 rg\n${x} ${y-5} ${w} 24 re f\n1 1 1 rg\n`+
+        pdfText(x+7,y+2,9.4,`${n}. ${title}`,true)+`0 0 0 rg\n`;
+}
+function pdfPair(c,x,y,label1,val1,label2,val2,colW=250){
+ c+=pdfText(x,y,8.1,label1,true); c+=pdfText(x+110,y,8.1,fitText(String(val1||"—"),colW-115,8.1));
+ if(label2){c+=pdfText(x+colW,y,8.1,label2,true);c+=pdfText(x+colW+110,y,8.1,fitText(String(val2||"—"),colW-115,8.1));}
+ return c;
+}
+function yesNoImpact(exists,impact){
+ let a=String(exists||"").trim(),b=String(impact||"").trim();
+ return [a,b].filter(Boolean).join(" - ")||"—";
+}
+function buildCompleteReportPdf(){
+ const PW=595,PH=842,ml=36,mr=36,bottom=58,W=PW-ml-mr;
+ const vars=state.vars.filter(v=>v.name.trim());
+ const isGalpao=String(state.inicio.tipologia||"")==="Galpão";
+ const metodoPrincipal=(document.getElementById("metodoAvaliacaoUniversal")?.value||state.metodologia?.metodoAvaliacao||"MCDDM");
+ const isMEVOL=String(metodoPrincipal).startsWith("MEVOL");
+ const g=state.galpao||{}, ev=state.evolutivo||{}, rev=state.resultadoEvolutivo||{};
+ const valEl=id=>document.getElementById(id)?.value||"";
+ const pdfMoneyBR=v=>{
+   let s=String(v??"").trim().replace(/^R\$\s*/i,"");
+   if(!s)return "—";
+   let n;
+   if(s.includes(",")) n=Number(s.replace(/\./g,"").replace(",","."));
+   else n=Number(s);
+   return Number.isFinite(n)?"R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"R$ "+s;
+ };
+ const reportPages=[];
+ let c="",y=PH-42;
+
+ function header(sub=""){
+   let z="";
+   const title=`LAUDO DE AVALIAÇÃO ${state.inicio.numeroLaudo||""}`.trim(); const tx=Math.max(ml,(PW-title.length*7.8)/2);
+   z+=pdfText(tx,PH-38,15,title,true);
+   z+="0.72 G 0.6 w\n"+`${ml} ${PH-61} ${W} 0 re S\n`;
+   return z;
+ }
+ function line(label,val,yy,x=ml,max=W,labelW=145){
+   let h=18;
+   let z="0.80 G 0.35 w\n"+`${x} ${yy-6} ${max} ${h} re S\n`+`${x+labelW} ${yy-6} 0 ${h} re S\n`;
+   z+="0.96 g\n"+`${x} ${yy-6} ${labelW} ${h} re f\n0 g\n`;
+   let txt=String(val??"").trim()||"—";
+   let lfs=Math.max(5.2,Math.min(7.4,(labelW-12)/(Math.max(1,String(label).length)*0.52)));
+   let fs=Math.max(5.0,Math.min(7.5,(max-labelW-12)/(Math.max(1,txt.length)*0.52)));
+   z+=pdfText(x+6,yy,lfs,fitText(String(label),labelW-12,lfs),true)+pdfText(x+labelW+6,yy,fs,txt);
+   return z;
+ }
+ function pair(l1,v1,l2,v2,yy){
+   let h=18,col=W/2,labelW=120,x1=ml,x2=ml+col;
+   let z="0.80 G 0.35 w\n";
+   [x1,x2].forEach(x=>{z+=`${x} ${yy-6} ${col} ${h} re S\n`;z+=`${x+labelW} ${yy-6} 0 ${h} re S\n`;});
+   z+="0.96 g\n"+`${x1} ${yy-6} ${labelW} ${h} re f\n`+`${x2} ${yy-6} ${labelW} ${h} re f\n0 g\n`;
+   let t1=String(v1??"").trim()||"—",t2=String(v2??"").trim()||"—";
+   let lf1=Math.max(4.3,Math.min(7.2,(labelW-10)/(Math.max(1,String(l1).length)*0.52)));
+   let lf2=Math.max(4.3,Math.min(7.2,(labelW-10)/(Math.max(1,String(l2).length)*0.52)));
+   let f1=Math.max(5.0,Math.min(7.3,(col-labelW-10)/(Math.max(1,t1.length)*0.52))),f2=Math.max(5.0,Math.min(7.3,(col-labelW-10)/(Math.max(1,t2.length)*0.52)));
+   z+=pdfText(x1+6,yy,lf1,fitText(String(l1),labelW-10,lf1),true)+pdfText(x1+labelW+5,yy,f1,t1);
+   z+=pdfText(x2+6,yy,lf2,fitText(String(l2),labelW-10,lf2),true)+pdfText(x2+labelW+5,yy,f2,t2);
+   return z;
+ }
+ function resultHighlight(label,val,yy){
+   let h=27,labelW=170;
+   let z="0.13 0.32 0.50 rg\n"+`${ml} ${yy-8} ${W} ${h} re f\n`;
+   z+="1 1 1 rg\n"+pdfText(ml+8,yy,8.2,label,true);
+   z+=pdfText(ml+labelW,yy,10.5,fitText(String(val??"").trim()||"—",W-labelW-12,10.5),true);
+   z+="0 0 0 rg\n";
+   return z;
+ }
+ function marketValueHighlight(label,val,yy){
+   let h=27,labelW=170;
+   // Azul claro para diferenciar o resultado final dos títulos de seção.
+   let z="0.82 0.90 0.96 rg\n"+`${ml} ${yy-8} ${W} ${h} re f\n`;
+   z+="0.08 0.25 0.40 rg\n"+pdfText(ml+8,yy,8.2,label,true);
+   z+=pdfText(ml+labelW,yy,10.5,fitText(String(val??"").trim()||"—",W-labelW-12,10.5),true);
+   z+="0 0 0 rg\n";
+   return z;
+ }
+ function signatureBox(yy){
+   let h=66,half=W/2;
+   let z="0.75 G 0.5 w\n"+`${ml} ${yy-h} ${W} ${h} re S\n`+`${ml+half} ${yy-h} 0 ${h} re S\n`;
+   // Área destinada exclusivamente às assinaturas; os dados cadastrais já constam acima.
+   const lineY=yy-40;
+   z+=`${(ml+28).toFixed(2)} ${lineY.toFixed(2)} ${(half-56).toFixed(2)} 0 re S\n`;
+   z+=`${(ml+half+28).toFixed(2)} ${lineY.toFixed(2)} ${(half-56).toFixed(2)} 0 re S\n`;
+   z+=pdfText(ml+half/2-30,yy-54,7.4,"Representante legal",true);
+   z+=pdfText(ml+half+half/2-32,yy-54,7.4,"Responsável técnico",true);
+   return z;
+ }
+ function section(n,title){
+   // Mantém distância física entre a última linha da tabela e a faixa azul seguinte.
+   // As células se estendem acima da linha-base; sem esta folga a faixa cobria o texto anterior.
+   y-=10;
+   if(y<bottom+72)pushPage();
+   c+=pdfSectionTitle(ml,y,W,n,title); y-=32;
+ }
+ function pushPage(){reportPages.push({content:c,W:PW,H:PH});c=header(`Laudo ${state.inicio.numeroLaudo||"—"}`);y=PH-82;}
+
+ // v20.3 — campos textuais livres com quebra automática e altura dinâmica.
+ function wrapPdfText(text,width,size){
+   const raw=String(text??"").trim()||"—";
+   const max=Math.max(8,Math.floor(width/(size*0.52)));
+   const paragraphs=raw.split(/\n+/);
+   const lines=[];
+   paragraphs.forEach((p,pi)=>{
+     const words=p.split(/\s+/).filter(Boolean);
+     let cur="";
+     if(!words.length) lines.push("");
+     words.forEach(w=>{
+       // Divide palavras/URLs excepcionalmente longas para nunca ultrapassar a célula.
+       while(w.length>max){
+         const part=w.slice(0,max); w=w.slice(max);
+         if(cur){lines.push(cur);cur="";}
+         lines.push(part);
+       }
+       const test=cur?cur+" "+w:w;
+       if(test.length<=max) cur=test;
+       else { if(cur) lines.push(cur); cur=w; }
+     });
+     if(cur) lines.push(cur);
+     if(pi<paragraphs.length-1) lines.push("");
+   });
+   return lines.length?lines:["—"];
+ }
+ function obsVal(v){return String(v??"").trim()||"Nada a acrescentar.";} 
+ function longLine(label,val){
+   const labelW=145, fs=7.3, leading=10.2, padTop=7, padBottom=6;
+   const lines=wrapPdfText(val,W-labelW-12,fs);
+   const h=Math.max(18,padTop+padBottom+lines.length*leading);
+   if(y-h<bottom+6) pushPage();
+   let z="0.80 G 0.35 w\n"+`${ml} ${y-h+12} ${W} ${h} re S\n`+`${ml+labelW} ${y-h+12} 0 ${h} re S\n`;
+   z+="0.96 g\n"+`${ml} ${y-h+12} ${labelW} ${h} re f\n0 g\n`;
+   let lfs=Math.max(5.2,Math.min(7.4,(labelW-12)/(Math.max(1,String(label).length)*0.52)));
+   z+=pdfText(ml+6,y,lfs,fitText(String(label),labelW-12,lfs),true);
+   lines.forEach((ln,i)=>{ z+=pdfText(ml+labelW+6,y-i*leading,fs,ln); });
+   c+=z; y-=h+2;
+ }
+
+ // PAGE 1 - Identificação
+ c=header(`Laudo ${state.inicio.numeroLaudo||"—"}`); y=PH-82;
+ section("1","Identificação da avaliação");
+ c+=pair("Nº da OS",state.inicio.os,"Nº do laudo",state.inicio.numeroLaudo,y);y-=19;
+ c+=pair("Data da vistoria",brDate(state.inicio.dataVistoria),"Data-base",brDate(state.inicio.dataBase),y);y-=19;
+ c+=pair("Finalidade",state.inicio.finalidade,"Objetivo",state.inicio.objetivo,y);y-=19;
+ c+=pair("Tipo do imóvel",state.inicio.tipologia,"Uso atual",state.inicio.uso,y);y-=19;
+ c+=pair("Condição da vistoria",state.inicio.condicaoVistoria,"Acesso ao interior",state.inicio.acessoInterior,y);y-=28;
+
+ section("2","Identificação do imóvel");
+ c+=line("Proprietário",state.inicio.proprietario,y,ml,W,120);y-=19;
+ c+=line("Endereço",[state.inicio.endereco,state.inicio.numeroComplemento].filter(Boolean).join(" - "),y,ml,W,120);y-=19;
+ c+=line("Condomínio / empreendimento",state.inicio.condominio,y,ml,W,120);y-=19;
+ c+=pair("Bairro",state.inicio.bairro,"Município / UF",[state.inicio.municipio,state.inicio.uf].filter(Boolean).join(" / "),y);y-=19;
+ c+=pair("CEP",state.inicio.cep,"Matrícula",state.inicio.matricula,y);y-=19;
+ c+=line("Cartório",state.inicio.cartorio,y,ml,W,120);y-=19;
+ c+=pair("Latitude",state.inicio.latitude,"Longitude",state.inicio.longitude,y);y-=24;
+
+ section("3","Localização e microrregião");
+ c+=pair("Uso predominante",state.local.usoPred,"Ocupação da região",state.local.ocupacao,y);y-=18;
+ c+=pair("Padrão predominante",state.local.padrao,"Densidade",state.local.densidade,y);y-=18;
+ c+=pair("Acesso viário",state.local.acessoViario,"Transporte público",state.local.transportePublico,y);y-=18;
+ c+=pair("Estacionamento",state.local.estacionamento,"Vias principais",state.local.viasPrincipais,y);y-=18;
+ c+=pair("Acesso a rodovias",state.local.rodovias,"Transporte sobre trilhos",state.local.trilhos,y);y-=18;
+ longLine("Observação sobre a região",obsVal(state.local.obsRegiao));
+ section("3.1","Infraestrutura e equipamentos");
+ [
+ ["Água",state.local.agua,"Esgoto",state.local.esgoto],
+ ["Energia",state.local.energia,"Iluminação pública",state.local.iluminacao],
+ ["Pavimentação",state.local.pavimentacao,"Drenagem",state.local.drenagem],
+ ["Telefonia / dados",state.local.dados,"Gás canalizado",state.local.gas]
+ ].forEach(r=>{c+=pair(...r,y);y-=20});
+ y-=5;
+ [
+ ["Comércio / serviços",yesNoImpact(state.local.comercioExiste,state.local.comercioObs)],
+ ["Escolas",yesNoImpact(state.local.escolasExiste,state.local.escolasObs)],
+ ["Saúde",yesNoImpact(state.local.saudeExiste,state.local.saudeObs)],
+ ["Parques / lazer",yesNoImpact(state.local.lazerExiste,state.local.lazerObs)],
+ ["Shopping",yesNoImpact(state.local.shoppingExiste,state.local.shoppingObs)],
+ ["Metrô / trem",yesNoImpact(state.local.metroExiste,state.local.metroObs)],
+ ["Ocupação irregular",yesNoImpact(state.local.irregularExiste,state.local.irregularObs)],
+ ["Outro",yesNoImpact(state.local.outroExiste,state.local.outroObs)]
+ ].forEach(r=>{c+=line(r[0],r[1],y);y-=18});
+ y-=12;
+ section("4","Caracterização do imóvel");
+ if(isGalpao){
+   c+=pdfText(ml+8,y,8.5,"Terreno",true);y-=18;
+   c+=pair("Área total do terreno (m²)",g.areaTerreno,"Nº de frentes",g.frentes,y);y-=18;
+   c+=pair("Testada principal (m)",g.testada,"Lado direito (m)",g.ladoDireito,y);y-=18;
+   c+=pair("Fundos (m)",g.fundos,"Lado esquerdo (m)",g.ladoEsquerdo,y);y-=18;
+   c+=pair("Situação",g.situacao,"Fração ideal",g.fracaoIdeal,y);y-=18;
+   c+=pair("Topografia",g.topografia,"Superfície",g.superficie,y);y-=18;
+   c+=pair("Cota do greide",g.greide,"Formato",g.formato,y);y-=18;
+   longLine("Zoneamento e usos permitidos",g.zoneamento);
+   c+=pair("Taxa de ocupação máxima (%)",g.taxaOcupacao,"Coef. de aproveitamento",g.coefAproveitamento,y);y-=18;
+   c+=pair("Taxa de permeabilidade (%)",g.taxaPermeabilidade,"Altura máxima permitida",g.alturaMaxima,y);y-=18;
+   c+=line("Tipo de fechamento",g.fechamento,y);y-=18;
+   const restrs=Array.isArray(g.restricoesLista)?g.restricoesLista.filter(r=>String(r.tipo||"").trim()||String(r.area||"").trim()):[];
+   if(restrs.length){
+     restrs.forEach((r,i)=>{c+=pair(`Restrição ${i+1}`,r.tipo||"—","Área impactada (m²)",r.area||"—",y);y-=18;});
+   }else{c+=pair("Restrições no terreno","Nada a acrescentar.","Área impactada (m²)","—",y);y-=18;}
+   c+=line("Área adotada para cálculo (m²)",g.areaTerrenoAdotada,y);y-=18;
+   longLine("Observações do terreno",obsVal(g.obsTerreno));y-=4;
+   if(y<bottom+210)pushPage();
+   c+=pdfText(ml+8,y,8.5,"Benfeitorias / Galpão",true);y-=18;
+   c+=pair("Área construída total (m²)",g.areaConstruida,"Área não averbada (m²)",g.naoAverbada,y);y-=18;
+   c+=pair("Área construída adotada (m²)",g.areaAvalianda,"Idade aparente (anos)",g.idadeAparente,y);y-=18;
+   c+=pair("Estado de conservação",g.conservacao,"Padrão de acabamento",g.padraoAcabamento,y);y-=18;
+   c+=pair("Pé-direito (m)",g.peDireito,"Estrutura",g.estrutura,y);y-=18;
+   c+=pair("Cobertura",g.cobertura,"Piso",g.piso,y);y-=18;
+   c+=pair("Docas",g.docas,"Pontes rolantes",g.pontesRolantes,y);y-=18;
+   c+=pair("Pátio de manobras",g.patio,"Estacionamento",g.estacionamentoGalpao,y);y-=18;
+   longLine("Sistema de combate a incêndio",g.incendio);
+   longLine("Divisão interna / outras características",g.divisaoInterna);
+   longLine("Regularização área não averbada",`${g.impRegularizacao||"—"}${g.motivoRegularizacao?" - "+g.motivoRegularizacao:""}`);
+   longLine("Impedimento de acesso",`${g.impAcesso||"—"}${g.motivoAcesso?" - "+g.motivoAcesso:""}`);
+   longLine("Documentação x vistoria",`${g.docVistoria||"—"}${g.obsDoc?" - "+g.obsDoc:""}`);
+ }else{
+   c+=pair("Área da matrícula (m²)",state.carac.areaMatricula,"Área não averbada (m²)",state.carac.naoAverbada,y);y-=18;
+   c+=pair("Área adotada (m²)",state.carac.areaAdotada,"Andar / pavimento",state.carac.andar,y);y-=18;
+   c+=pair("Dormitórios",state.carac.dormitorios,"Suítes",state.carac.suites,y);y-=18;
+   c+=pair("Banheiros",state.carac.banheiros,"Vagas",state.carac.vagas,y);y-=18;
+   longLine("Lazer / infraestrutura",
+     [["Piscina",state.carac.piscina],["Academia",state.carac.academia],["Salão festas",state.carac.salaoFestas],
+      ["Churrasqueira",state.carac.churrasqueira],["Playground",state.carac.playground],["Quadra",state.carac.quadra],
+      ["Salão jogos",state.carac.salaoJogos],["Espaço gourmet",state.carac.gourmet]]
+     .filter(x=>x[1]).map(x=>x[0]+": "+x[1]).join(" | "));
+   longLine("Outro lazer",state.carac.outroLazer);
+   longLine("Regularização área não averbada",`${state.carac.impRegularizacao||"—"}${state.carac.motivoRegularizacao?" - "+state.carac.motivoRegularizacao:""}`);
+   longLine("Impedimento de acesso",`${state.carac.impAcesso||"—"}${state.carac.motivoAcesso?" - "+state.carac.motivoAcesso:""}`);
+   longLine("Documentação x vistoria",`${state.carac.docVistoria||"—"}${state.carac.divergencias?" - "+state.carac.divergencias:""}`);
+ }
+ section("5","Metodologia");
+ if(isMEVOL){
+   c+=line("Método principal","MEVOL - Método Evolutivo",y);y-=19;
+   c+=line("Método para determinação do terreno",ev.metodoTerreno||"MCDDM - Método Comparativo Direto de Dados de Mercado",y);y-=23;
+   c+=pdfText(ml+8,y,8.5,"5.1 Determinação do valor do terreno — MCDDM",true);y-=18;
+ }else{
+   c+=line("Método","MCDDM - Método Comparativo Direto de Dados de Mercado",y);y-=19;
+ }
+ c+=pair("Total de dados",state.metodados.totalDados,"Dados utilizados",state.metodados.dadosUtilizados,y);y-=18;
+ c+=pair("Total de variáveis",state.metodados.totalVariaveis,"Variáveis utilizadas",state.metodados.variaveisUtilizadas,y);y-=18;
+ longLine("Equação do modelo",state.metodados.equacao);y-=4;
+ if(y<bottom+72)pushPage();
+ c+=pair("R²",state.metodados.r2,"R² ajustado",state.metodados.r2aj,y);y-=24;
+ if(y<bottom+92)pushPage();
+ c+=pdfText(ml+8,y,8.5,"Resultados da inferência",true);y-=18;
+ c+=pair("VU estimado / central",state.metodados.vuCentral,"VU adotado",state.metodados.vuAdotado,y);y-=18;
+ c+=pair("Limite inferior",state.metodados.limInf,"Limite superior",state.metodados.limSup,y);y-=18;
+ c+=pair("Grau de fundamentação",state.metodados.grauFund,"Grau de precisão",state.metodados.grauPrecisao,y);y-=24;
+ if(y<bottom+55)pushPage();
+ c+=pdfText(ml+8,y,8.5,"Variáveis adotadas no modelo",true);y-=19;
+
+ vars.forEach((v,i)=>{
+   let need=(v.type==="Qualitativa"&&v.classes?.length)?100:82;
+   if(y<bottom+need){pushPage();c+=pdfText(ml+8,y,8.5,"Variáveis adotadas no modelo - continuação",true);y-=19;}
+   c+="0.95 g\n"+`${ml+6} ${y-5} ${W-12} 19 re f\n0 g\n`;
+   c+=pdfText(ml+12,y,8.2,`${i+1}. ${v.name}`,true);y-=21;
+   c+=pair("Tipo",v.type,"Transformação",v.transform,y);y-=18;
+   c+=pair("Valor do avaliando",v.subject,"Impacto sobre o modelo",v.impact,y);y-=18;
+   longLine("Descrição",v.desc);
+   if(variableUsesClassification(v)&&v.classes?.length){
+     longLine("Classificação",v.classes.map(x=>`${x.code} = ${x.label}`).join(" | "));
+   }
+   y-=8;
+ });
+ if(isMEVOL){
+   if(y<bottom+170)pushPage();
+   y-=4;c+=pdfText(ml+8,y,8.5,"5.2 Quantificação do Custo — Benfeitorias",true);y-=19;
+   c+=pair("Valor das benfeitorias",brMoney(ev.valorBenfeitorias),"BDI utilizado (%)",ev.bdi,y);y-=18;
+   c+=pair("FC",ev.fc,"Valor do terreno",valEl("evCompTerreno")?("R$ "+valEl("evCompTerreno")):"—",y);y-=18;
+   longLine("Observações sobre o FC",obsVal(ev.obsFc));
+   longLine("Demais observações",obsVal(ev.obs));y-=4;
+   c+=line("Fundamentação da Quantificação do Custo",ev.fundCustoGrau,y);y-=18;
+   c+=line("Fundamentação do Método Evolutivo",ev.fundEvGrau,y);y-=22;
+   c+=pdfText(ml+8,y,8.5,"5.3 Composição do Método Evolutivo",true);y-=19;
+   c+=pair("Valor do terreno",valEl("evCompTerreno")?("R$ "+valEl("evCompTerreno")):"—","Valor das benfeitorias",valEl("evCompBenfeitorias")?("R$ "+valEl("evCompBenfeitorias")):"—",y);y-=18;
+   c+=pair("Valor antes do FC",valEl("evSubtotal")?("R$ "+valEl("evSubtotal")):"—","FC",valEl("evCompFC"),y);y-=18;
+   c+=line("Valor de mercado calculado",valEl("evValorImovel")?("R$ "+valEl("evValorImovel")):"—",y);y-=20;
+ }
+ if(y<bottom+72)pushPage();
+ section("6","Diagnóstico de mercado");
+ c+=pair("Desempenho",state.diag.desempenho,"Demanda",state.diag.demanda,y);y-=18;
+ c+=pair("Quantidade de ofertas",state.diag.ofertas,"Liquidez",state.diag.liquidez,y);y-=18;
+ longLine("Prazo estimado de comercialização",state.diag.prazo);
+ longLine("Facilitadores",state.diag.facilitadores);
+ longLine("Dificultadores",state.diag.dificultadores);
+ longLine("Observações de mercado",obsVal(state.diag.obs));y-=4;
+
+ const objetivoPdf=String(state.inicio.objetivo||"");
+ const resultNeed=(isMEVOL?142:106)+(/VLI/i.test(objetivoPdf)?42:0)+(/Locação/i.test(objetivoPdf)?22:0)+(/Valor de Mercado/i.test(objetivoPdf)?52:0);
+ if(y<bottom+resultNeed)pushPage();
+ section("7","Resultado da avaliação");
+ if(isMEVOL){
+   c+=pair("Valor do terreno",valEl("resEvTerreno")?("R$ "+valEl("resEvTerreno")):"—","Valor das benfeitorias",valEl("resEvBenfeitorias")?("R$ "+valEl("resEvBenfeitorias")):"—",y);y-=18;
+   c+=pair("FC",valEl("resEvFC"),"Valor antes do FC",valEl("resEvSubtotal")?("R$ "+valEl("resEvSubtotal")):"—",y);y-=18;
+   c+=line("Valor calculado",valEl("resEvCalculado")?("R$ "+valEl("resEvCalculado")):"—",y);y-=18;
+   c+=pair("Valor adotado",pdfMoneyBR(rev.valorAdotado),"Diferença p/ calculado",valEl("resEvDiferenca"),y);y-=26;
+   if(String(rev.valorAdotado||"").trim() && /Valor de Mercado/i.test(state.inicio.objetivo||"")){c+=marketValueHighlight("VALOR DE MERCADO",pdfMoneyBR(rev.valorAdotado),y);y-=34;longLine("Valor por extenso",valorMonetarioPorExtenso(rev.valorAdotado));}
+   if(/VLI/i.test(state.inicio.objetivo||"") && String(rev.vliMax||"").trim()){c+=pair("VLI Máximo",pdfMoneyBR(rev.vliMax),"Prazo Mínimo",rev.prazoMin,y);y-=20}
+   if(/VLI/i.test(state.inicio.objetivo||"") && String(rev.vliMin||"").trim()){c+=pair("VLI Mínimo",pdfMoneyBR(rev.vliMin),"Prazo Máximo",rev.prazoMax,y);y-=20}
+   if(/Locação/i.test(state.inicio.objetivo||"") && String(rev.valorLocacao||"").trim()){c+=pair("Valor de Locação",pdfMoneyBR(rev.valorLocacao),"Locação Máxima",rev.valorMaxLocacao?pdfMoneyBR(rev.valorMaxLocacao):"—",y);y-=20}
+ }else{
+   c+=pair("VU adotado (R$/m²)",state.resultado.vu,"Área adotada (m²)",state.resultado.areaAdotada,y);y-=18;
+   c+=line("Valor calculado",pdfMoneyBR(state.resultado.valorCalculado),y);y-=18;
+   const mcAdotadoPdf=(state.resultado.vm||state.resultado.valorMercado||state.resultado.valorArredondado||"");
+   c+=line("Valor adotado",pdfMoneyBR(mcAdotadoPdf),y);y-=26;
+   if(/Valor de Mercado/i.test(state.inicio.objetivo||"") && String(mcAdotadoPdf).trim()){c+=marketValueHighlight("VALOR DE MERCADO",pdfMoneyBR(mcAdotadoPdf),y);y-=34;longLine("Valor por extenso",valorMonetarioPorExtenso(mcAdotadoPdf));}
+   if(/VLI/i.test(state.inicio.objetivo||"") && String(state.resultado.vliMax||"").trim()){c+=pair("VLI Máximo",pdfMoneyBR(state.resultado.vliMax),"Prazo Mínimo",state.resultado.prazoMin,y);y-=20}
+   if(/VLI/i.test(state.inicio.objetivo||"") && String(state.resultado.vliMin||"").trim()){c+=pair("VLI Mínimo",pdfMoneyBR(state.resultado.vliMin),"Prazo Máximo",state.resultado.prazoMax,y);y-=20}
+   if(/Locação/i.test(state.inicio.objetivo||"") && String(state.resultado.valorLocacao||"").trim()){c+=pair("Valor de Locação",pdfMoneyBR(state.resultado.valorLocacao),"Locação Máxima",pdfMoneyBR(state.resultado.valorMaxLocacao),y);y-=20}
+ } y-=10;
+ section("8","Observações gerais");
+ longLine("Observações",obsVal(state.observacoes?.gerais));y-=16;
+
+ section("9","Relação de Anexos");
+ const roman=n=>{const m=[[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];let r="";for(const [v,a] of m)while(n>=v){r+=a;n-=v}return r};
+ const anexosRel=["Dados Amostrais","Mapa de Localização das Amostras"];
+ const relKeys=[["matricula","Matrícula"],["fotoAvaliando","Relatório fotográfico do avaliando"],["fotoAmostras","Relatório fotográfico das amostras"],["sisdea","Relatório estatístico SISDEA"],["mapa","Mapa de localização das amostras"],["art","ART/RRT"],["vli","Memória / planilha de cálculo do VLI"],["complementar","Documentação complementar"]];
+ relKeys.forEach(([k,l])=>{if(state.docs?.[k+"Status"]==="Anexado")anexosRel.push(l);});
+ anexosRel.forEach((a,i)=>{c+=line(`Anexo ${roman(i+1)}`,a,y);y-=18;if(y<bottom+36)pushPage();});
+ const encerramentoNeed=174;
+ if(y<bottom+encerramentoNeed)pushPage();
+ section("10","Encerramento");
+ c+=pair("Local",state.encerramento?.local,"Data de emissão",brDate(state.encerramento?.dataEmissao),y);y-=18;
+ c+=line("Empresa responsável pela avaliação",state.encerramento?.empresa,y);y-=18;
+ c+=line("CNPJ",state.encerramento?.cnpj,y);y-=18;
+ c+=pair("Representante legal",state.encerramento?.representante,"CPF",state.encerramento?.cpf,y);y-=18;
+ c+=pair("Responsável técnico",state.encerramento?.responsavel,"CPF",state.encerramento?.cpfResponsavel,y);y-=18;
+ c+=line("CREA / CAU",state.encerramento?.crea,y);y-=22;
+ c+=signatureBox(y);y-=66;
+ reportPages.push({content:c,W:PW,H:PH});
+
+ // ANEXO I - mantém a tabela adaptativa aprovada
+ const annexPages=[];
+ const completeRows=state.samples.map((s,i)=>({s,i})).filter(x=>complete(x.s));
+ const AW=842,AH=595,aml=22,amr=22,atop=50,abottom=30,rowH=18,headH=30,usable=AW-aml-amr,maxVarsPerBlock=4;
+ const blocks=[];if(!vars.length)blocks.push([]);else for(let i=0;i<vars.length;i+=maxVarsPerBlock)blocks.push(vars.slice(i,i+maxVarsPerBlock));
+ const fixedHeaders=["ID","Endereço / identificação","Município","UF","Fonte","Data pesquisa","Latitude","Longitude","Área (m²)","Valor total (R$)","VU (R$/m²)"];
+ const perPage=Math.max(1,Math.floor((AH-atop-abottom-headH-20)/rowH)),verticalPages=Math.max(1,Math.ceil(completeRows.length/perPage));
+ blocks.forEach((block,bi)=>{
+  for(let vp=0;vp<verticalPages;vp++){
+   let ac="",chunk=completeRows.slice(vp*perPage,(vp+1)*perPage),headers=[...fixedHeaders,...block.map(v=>v.name)];
+   ac+="0.13 0.32 0.50 rg\n"+`${aml} ${AH-35} ${usable} 24 re f\n1 1 1 rg\n`;
+   ac+=pdfText(aml+7,AH-27,11,"ANEXO I - DADOS AMOSTRAIS",true);
+   ac+="0 0 0 rg\n";
+   ac+=pdfText(aml,AH-47,7.3,`Laudo ${state.inicio.numeroLaudo||"—"}`,true);
+   if(blocks.length>1)ac+=pdfText(250,AH-38,7,`Variáveis ${bi*maxVarsPerBlock+1} a ${bi*maxVarsPerBlock+block.length} de ${vars.length}`);
+   let fixedWeights=[.055,.155,.105,.038,.085,.078,.078,.078,.062,.105,.075],sum=fixedWeights.reduce((a,b)=>a+b,0),share=block.length?.25:0;
+   let widths=fixedWeights.map(w=>w/sum*(1-share)*usable);if(block.length)widths.push(...Array(block.length).fill(share*usable/block.length));
+   let ay=AH-atop-headH-9,ax=aml;ac+="0.13 0.32 0.50 rg\n";
+   for(let j=0;j<headers.length;j++){ac+=`${ax.toFixed(2)} ${ay.toFixed(2)} ${widths[j].toFixed(2)} ${headH} re f\n`;ax+=widths[j]}
+   ac+="1 1 1 rg\n";ax=aml;
+   for(let j=0;j<headers.length;j++){
+    let t=String(headers[j]),fs=5.8,max=Math.max(2,Math.floor((widths[j]-4)/(fs*.52)));
+    if(t.length<=max)ac+=pdfText(ax+2,ay+11,fs,t,true);
+    else{let cut=t.lastIndexOf(" ",max);if(cut<Math.floor(max*.45))cut=max;ac+=pdfText(ax+2,ay+17,fs,fitText(t.slice(0,cut).trim(),widths[j]-4,fs),true);ac+=pdfText(ax+2,ay+7,fs,fitText(t.slice(cut).trim(),widths[j]-4,fs),true)}
+    ax+=widths[j];
+   }
+   ac+="0 0 0 rg\n0.75 G 0.35 w\n";
+   chunk.forEach(({s,i},ri)=>{
+    let r=["AM"+String(i+1).padStart(3,"0"),s.endereco,s.municipio,s.uf,s.fonte,brDate(s.data),fmtCoord(s.lat),fmtCoord(s.lon),brNum(s.area,2),brMoney(s.valor),brMoney(vu(s)),...block.map(v=>String(s.vars[v.id]??""))];
+    let yy=ay-(ri+1)*rowH;ax=aml;
+    if(ri%2===1){ac+="0.97 g\n"+`${aml} ${yy} ${usable} ${rowH} re f\n0 g\n`;}
+    for(let j=0;j<headers.length;j++){ac+=`${ax.toFixed(2)} ${yy.toFixed(2)} ${widths[j].toFixed(2)} ${rowH} re S\n`;ac+=pdfText(ax+2,yy+6,5.6,fitText(r[j],widths[j]-4,5.6));ax+=widths[j]}
+   });
+   annexPages.push({content:ac,W:AW,H:AH});
+  }
+ });
+
+ const pages=[...reportPages,...annexPages],total=pages.length,laudo=state.inicio.numeroLaudo||"—";
+ pages.forEach((pg,i)=>{pg.content+=footer(pg.W,i+1,total,laudo)});
+
+ let objects=[null];objects.push("<< /Type /Catalog /Pages 2 0 R >>");objects.push("");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+ objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+ let pageIds=[];
+ pages.forEach(pg=>{let cid=objects.length,b=win1252Bytes(pg.content);objects.push({stream:b});let pid=objects.length;objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pg.W} ${pg.H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${cid} 0 R >>`);pageIds.push(pid)});
+ objects[2]=`<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`;
+ let chunks=[win1252Bytes("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")],offsets=[0],pos=chunks[0].length;
+ for(let i=1;i<objects.length;i++){offsets[i]=pos;let pre=win1252Bytes(`${i} 0 obj\n`),body;if(objects[i]&&objects[i].stream){let s=objects[i].stream;body=new Uint8Array([...win1252Bytes(`<< /Length ${s.length} >>\nstream\n`),...s,...win1252Bytes("\nendstream")])}else body=win1252Bytes(objects[i]);let post=win1252Bytes("\nendobj\n");chunks.push(pre,body,post);pos+=pre.length+body.length+post.length}
+ let xref=pos,xs=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;for(let i=1;i<objects.length;i++)xs+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+ xs+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;chunks.push(win1252Bytes(xs));
+ return new Blob(chunks,{type:"application/pdf"});
+}
+
+const docPdfFiles={};
+
+function syncDocFileControls(){
+ document.querySelectorAll("[data-doc-file]").forEach(inp=>{
+   const key=inp.dataset.docFile;
+   const sel=document.querySelector(`[data-form="docs"][data-key="${key}Status"]`);
+   const status=String(sel?.value ?? state.docs?.[key+"Status"] ?? "");
+   inp.disabled=status!=="Anexado";
+   if(status!=="Anexado" && docPdfFiles[key]){
+     delete docPdfFiles[key];
+     inp.value="";
+   }
+   const name=document.querySelector(`[data-doc-name="${key}"]`);
+   if(name)name.textContent=docPdfFiles[key]?.name || (status==="Anexado"?"Selecione o PDF":"Nenhum arquivo selecionado");
+ });
+}
+document.addEventListener("change",e=>{
+ if(e.target?.matches("[data-doc-file]")){
+   const key=e.target.dataset.docFile,file=e.target.files?.[0];
+   if(file)docPdfFiles[key]=file; else delete docPdfFiles[key];
+   syncDocFileControls();
+ }
+ if(e.target?.matches('[data-form="docs"][data-key$="Status"]')){
+   const k=e.target.dataset.key;
+   state.docs[k]=e.target.value;
+   syncDocFileControls();
+ }
+});
+
+function bindDocAttachmentStatus(){
+ document.querySelectorAll('[data-form="docs"][data-key$="Status"]').forEach(sel=>{
+   const apply=()=>{
+     const key=sel.dataset.key.replace(/Status$/,"");
+     const inp=document.querySelector(`[data-doc-file="${key}"]`);
+     const name=document.querySelector(`[data-doc-name="${key}"]`);
+     const enabled=sel.value==="Anexado";
+     if(inp){
+       inp.disabled=!enabled;
+       if(!enabled){
+         delete docPdfFiles[key];
+         inp.value="";
+       }
+     }
+     if(name)name.textContent=docPdfFiles[key]?.name || (enabled?"Selecione o PDF":"Nenhum arquivo selecionado");
+   };
+   sel.addEventListener("change",apply);
+   sel.addEventListener("input",apply);
+   apply();
+ });
+}
+
+async function generateAnexoII(){
+ if(!window.maplibregl||!window.html2canvas)return null;
+ const num=(state.inicio?.numeroLaudo||"").trim();
+ const avLat=parseFloat(String(state.inicio?.latitude??state.inicio?.lat??state.localizacao?.latitude??state.localizacao?.lat??"").replace(",","."));
+ const avLng=parseFloat(String(state.inicio?.longitude??state.inicio?.lon??state.localizacao?.longitude??state.localizacao?.lon??"").replace(",","."));
+ const rows=Array.isArray(state.samples)?state.samples:[];
+ const pts=rows.map((s,i)=>({
+  id:String(s.id||`AM${String(i+1).padStart(3,"0")}`).replace(/^AM/i,"").padStart(3,"0"),
+  seq:i+1,
+  cidade:String(s.municipio||"").trim()||"Município não informado",
+  lat:parseFloat(String(s.lat??"").replace(",", ".")),
+  lng:parseFloat(String(s.lon??"").replace(",", "."))
+ })).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng));
+ if(!pts.length)return null;
+
+ const avaliando=Number.isFinite(avLat)&&Number.isFinite(avLng)?{
+  lat:avLat,lng:avLng,
+  cidade:String(state.inicio?.cidade||state.localizacao?.cidade||state.inicio?.municipio||"").trim()
+ }:null;
+
+ const cities=[...new Set(pts.map(p=>p.cidade))];
+ const colors=["#1976d2","#f2a900","#159447","#7b1fa2","#00838f","#ef6c00","#5d4037","#546e7a"];
+ const cmap={}; cities.forEach((c,i)=>cmap[c]=colors[i%colors.length]);
+
+ const host=document.getElementById("anexoIIHost"); host.innerHTML="";
+ const specs=[{title:"Mapa geral",sub:"Todos os municípios",pts,eval:avaliando}];
+ if(cities.length>1){
+  cities.forEach(c=>specs.push({
+   title:`Mapa detalhado – ${c}`,sub:"Detalhamento municipal",
+   pts:pts.filter(p=>p.cidade===c),
+   eval:(avaliando&&avaliando.cidade===c)?avaliando:null
+  }));
+ }
+
+ const imgs=[];
+ for(let si=0;si<specs.length;si++){
+  const s=specs[si], page=document.createElement("div"); page.className="aii-page";
+  page.innerHTML=`<div class="aii-head"><div class="aii-k">ANEXO II – MAPA DE LOCALIZAÇÃO DAS AMOSTRAS</div><div class="aii-sub">${s.title}</div></div>
+  <div class="aii-meta"><div><b>Laudo</b>${num||"—"}</div><div><b>Visualização</b>${s.sub}</div><div><b>Pontos</b>${s.pts.length} amostra${s.pts.length!==1?"s":""}${s.eval?" + avaliando":""}</div></div>
+  <div class="aii-map"><div class="aii-map-inner"></div></div>
+  <div class="aii-caption">Identificação: os números dos marcadores correspondem aos IDs das amostras apresentados no Anexo I (1 = AM001, 2 = AM002, etc.). O enquadramento é definido automaticamente a partir das coordenadas informadas. Dados cartográficos: OpenStreetMap / OpenMapTiles.</div>
+  <div class="aii-foot">Laudo ${num||"—"} | Anexo II | Mapa de Localização das Amostras</div>`;
+  host.appendChild(page);
+
+  const mapEl=page.querySelector(".aii-map-inner");
+  const map=new maplibregl.Map({
+   container:mapEl,
+   style:"https://tiles.openfreemap.org/styles/liberty",
+   interactive:false,
+   attributionControl:false,
+   preserveDrawingBuffer:true,
+   fadeDuration:0
+  });
+
+  const bounds=new maplibregl.LngLatBounds();
+  const addPin=(p,isEval)=>{
+   const col=isEval?"#c62828":(cmap[p.cidade]||"#1976d2");
+   const txt=isEval?"A":String(p.seq);
+   const el=document.createElement("div");
+   el.className="aii-pin";
+   el.innerHTML=`<div class="aii-pin-body" style="background:${col}"></div><div class="aii-pin-text">${txt}</div>`;
+   new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat([p.lng,p.lat]).addTo(map);
+   bounds.extend([p.lng,p.lat]);
+  };
+
+  await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error("Tempo excedido ao carregar o mapa-base.")),15000);
+   map.once("load",()=>{clearTimeout(timer);resolve();});
+   map.once("error",e=>{ if(!map.loaded()){clearTimeout(timer);reject(new Error("Falha ao carregar o mapa-base."));} });
+  });
+
+  if(s.eval)addPin({...s.eval,cidade:s.eval.cidade||""},true);
+  s.pts.forEach(p=>addPin(p,false));
+  if(!bounds.isEmpty()) map.fitBounds(bounds,{padding:70,maxZoom:14,duration:0});
+
+  // Wait for the fitted camera to be applied before continuing.
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+  const legend=document.createElement("div");
+  legend.className="aii-legend";
+  legend.style.cssText="position:absolute;left:10px;bottom:28px;z-index:20;";
+  let lr=s.eval?'<span style="color:#c62828">●</span> Avaliando<br>':"";
+  [...new Set(s.pts.map(p=>p.cidade))].forEach(c=>lr+=`<span style="color:${cmap[c]}">●</span> Amostras – ${c}<br>`);
+  legend.innerHTML="<b>Legenda</b><br>"+lr;
+  page.querySelector(".aii-map").appendChild(legend);
+
+  const attr=document.createElement("div");
+  attr.style.cssText="position:absolute;right:5px;bottom:4px;z-index:20;background:#ffffffcc;padding:2px 4px;font-size:8px;color:#555;";
+  attr.textContent="OpenFreeMap © OpenMapTiles | Dados: OpenStreetMap";
+  page.querySelector(".aii-map").appendChild(attr);
+
+  map.resize();
+
+  // Wait for MapLibre's final render/idle cycle after resize + fitBounds.
+  // The first municipality detail was occasionally projected before this cycle.
+  await new Promise(resolve=>{
+   let finished=false;
+   const done=()=>{ if(!finished){ finished=true; resolve(); } };
+   map.once("idle",done);
+   setTimeout(done,2200);
+  });
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+  const liveCanvas=map.getCanvas();
+
+  // Capture the rendered WebGL base map first.
+  const mapDataUrl=liveCanvas.toDataURL("image/png");
+
+  // Calculate pin positions while MapLibre is still alive.
+  const staticPins=[];
+  const rememberPin=(p,isEval)=>{
+   const xy=map.project([p.lng,p.lat]);
+   staticPins.push({
+    x:xy.x,y:xy.y,
+    color:isEval?"#c62828":(cmap[p.cidade]||"#1976d2"),
+    text:isEval?"A":String(p.seq)
+   });
+  };
+  if(s.eval)rememberPin({...s.eval,cidade:s.eval.cidade||""},true);
+  s.pts.forEach(p=>rememberPin(p,false));
+
+  // From this point on, do NOT use html2canvas for the map page.
+  // Build the complete Anexo II page on a normal 2D canvas. This removes
+  // cloned-iframe/WebGL dependency entirely, even with many municipality maps.
+  map.remove();
+
+  const mapBitmap=await new Promise((resolve,reject)=>{
+   const im=new Image();
+   im.onload=()=>resolve(im);
+   im.onerror=()=>reject(new Error("Falha ao preparar a imagem do mapa."));
+   im.src=mapDataUrl;
+  });
+
+  const W=1240,H=1754;
+  const finalCanvas=document.createElement("canvas");
+  finalCanvas.width=W; finalCanvas.height=H;
+  const ctx=finalCanvas.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+
+  const navy="#174f7a", muted="#5d6b78";
+  ctx.fillStyle=navy; ctx.font="700 25px Arial"; ctx.fillText("ANEXO II",55,70);
+  ctx.font="700 34px Arial"; ctx.fillText("Mapa de Localização das Amostras",55,115);
+  ctx.fillStyle=muted; ctx.font="24px Arial"; ctx.fillText(s.title,55,153);
+
+  // Metadata strip
+  ctx.fillStyle="#f4f7f9"; ctx.fillRect(55,180,1130,115);
+  ctx.fillStyle="#222"; ctx.font="700 18px Arial";
+  ctx.fillText("Laudo",75,215); ctx.fillText("Visualização",455,215); ctx.fillText("Pontos",835,215);
+  ctx.font="20px Arial";
+  ctx.fillText(num||"—",75,252);
+  ctx.fillText(s.sub,455,252);
+  ctx.fillText(`${s.pts.length} amostra${s.pts.length!==1?"s":""}${s.eval?" + avaliando":""}`,835,252);
+
+  // Map image
+  const mx=55,my=325,mw=1130,mh=1040;
+  ctx.drawImage(mapBitmap,mx,my,mw,mh);
+
+  // Pins: map.project() coordinates were based on mapEl CSS pixels.
+  const sx=mw/mapEl.clientWidth, sy=mh/mapEl.clientHeight;
+  staticPins.forEach(sp=>{
+   const x=mx+sp.x*sx, y=my+sp.y*sy;
+   ctx.save();
+   ctx.fillStyle=sp.color; ctx.strokeStyle="#fff"; ctx.lineWidth=3;
+   ctx.beginPath(); ctx.arc(x,y-18,16,0,Math.PI*2); ctx.fill(); ctx.stroke();
+   ctx.beginPath(); ctx.moveTo(x-6,y-6); ctx.lineTo(x,y+5); ctx.lineTo(x+6,y-6); ctx.closePath(); ctx.fill(); ctx.stroke();
+   ctx.fillStyle="#fff"; ctx.font="700 15px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+   ctx.shadowColor="rgba(0,0,0,.55)"; ctx.shadowBlur=2;
+   ctx.fillText(sp.text,x,y-18);
+   ctx.restore();
+  });
+
+  // Legend
+  const usedCities=[...new Set(s.pts.map(p=>p.cidade))];
+  const lx=75, ly=1330-(usedCities.length*25)-(s.eval?25:0);
+  const boxH=42+(usedCities.length+(s.eval?1:0))*25;
+  ctx.fillStyle="rgba(255,255,255,.92)"; ctx.fillRect(lx,ly,330,boxH);
+  ctx.fillStyle="#222"; ctx.textAlign="left"; ctx.font="700 17px Arial"; ctx.fillText("Legenda",lx+12,ly+24);
+  let yy=ly+49;
+  if(s.eval){ctx.fillStyle="#c62828";ctx.beginPath();ctx.arc(lx+18,yy-5,6,0,Math.PI*2);ctx.fill();ctx.fillStyle="#222";ctx.font="16px Arial";ctx.fillText("Avaliando",lx+32,yy);yy+=25;}
+  usedCities.forEach(c=>{ctx.fillStyle=cmap[c];ctx.beginPath();ctx.arc(lx+18,yy-5,6,0,Math.PI*2);ctx.fill();ctx.fillStyle="#222";ctx.font="16px Arial";ctx.fillText(`Amostras – ${c}`,lx+32,yy);yy+=25;});
+
+  // Caption and footer
+  ctx.fillStyle="#444"; ctx.font="17px Arial"; ctx.textAlign="left";
+  const cap="Identificação: os números dos marcadores correspondem aos IDs das amostras apresentados no Anexo I (1 = AM001, 2 = AM002, etc.).";
+  ctx.fillText(cap,55,1425);
+  ctx.fillText("O enquadramento é definido automaticamente a partir das coordenadas informadas.",55,1452);
+  ctx.fillText("Dados cartográficos: OpenStreetMap / OpenMapTiles.",55,1479);
+  ctx.fillStyle="#666"; ctx.font="15px Arial"; ctx.fillText("OpenFreeMap © OpenMapTiles | Dados: OpenStreetMap",55,1525);
+
+  ctx.strokeStyle="#d5dce2"; ctx.beginPath();ctx.moveTo(55,1600);ctx.lineTo(1185,1600);ctx.stroke();
+  ctx.fillStyle=navy; ctx.font="17px Arial";
+  ctx.fillText(`Laudo ${num||"—"} | Anexo II | Mapa de Localização das Amostras`,55,1640);
+
+  imgs.push(finalCanvas.toDataURL("image/jpeg",.92));
+ }
+ host.innerHTML="";
+ const {PDFDocument}=window.PDFLib,doc=await PDFDocument.create();
+ for(const data of imgs){
+  const bytes=await fetch(data).then(r=>r.arrayBuffer()),jpg=await doc.embedJpg(bytes);
+  const p=doc.addPage([595.28,841.89]); p.drawImage(jpg,{x:0,y:0,width:595.28,height:841.89});
+ }
+ return new Blob([await doc.save()],{type:"application/pdf"});
+}
+async function consolidatePdf(mainBlob,extras){
+ if(!window.PDFLib)throw new Error("O módulo de consolidação de PDF não foi carregado.");
+ const {PDFDocument,StandardFonts,rgb}=window.PDFLib,finalDoc=await PDFDocument.create();
+ const font=await finalDoc.embedFont(StandardFonts.Helvetica);
+ const pageMeta=[];
+
+ async function appendMain(bytes){
+  let src;
+  try{src=await PDFDocument.load(bytes);}catch(e){throw new Error("Não foi possível abrir o Laudo gerado.");}
+  const copied=await finalDoc.copyPages(src,src.getPageIndices());
+  copied.forEach(p=>{finalDoc.addPage(p);pageMeta.push({kind:"main"});});
+ }
+
+ async function appendAnnex(bytes,label,annexNo){
+  let src;
+  try{src=await PDFDocument.load(bytes);}catch(e){throw new Error(`Não foi possível abrir "${label}".`);}
+  const copied=await finalDoc.copyPages(src,src.getPageIndices());
+  copied.forEach(p=>{
+   finalDoc.addPage(p);
+   pageMeta.push({kind:"attachment",label,annexNo});
+  });
+ }
+
+ await appendMain(await mainBlob.arrayBuffer());
+ const anexoII=await generateAnexoII();
+ if(anexoII)await appendAnnex(await anexoII.arrayBuffer(),"Mapa de Localização das Amostras",2);
+ const annexOffset=anexoII?3:2;
+ for(let i=0;i<extras.length;i++)await appendAnnex(await extras[i].file.arrayBuffer(),extras[i].label,i+annexOffset);
+
+ const allPages=finalDoc.getPages(),total=allPages.length,laudo=state.inicio?.numeroLaudo||"—";
+ allPages.forEach((p,i)=>{
+  const {width}=p.getSize(),meta=pageMeta[i],pageNo=i+1;
+  if(meta.kind==="main"){
+   // Substitui apenas a paginação original pelo total do PDF consolidado.
+   p.drawRectangle({x:width-150,y:0,width:150,height:24,color:rgb(1,1,1)});
+   p.drawText(`Página ${pageNo} de ${total}`,{x:width-105,y:7,size:7,font,color:rgb(.18,.18,.18)});
+  }else{
+   // Faixa única de identificação dos documentos complementares.
+   p.drawRectangle({x:0,y:0,width,height:22,color:rgb(.96,.97,.98)});
+   const roman=["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][meta.annexNo]||String(meta.annexNo);
+   const left=`Laudo ${laudo} | Anexo ${roman} | ${meta.label}`;
+   const right=`Página ${pageNo} de ${total}`;
+   p.drawText(left,{x:18,y:7,size:7.2,font,color:rgb(.25,.31,.36),maxWidth:width-150});
+   p.drawText(right,{x:width-105,y:7,size:7.2,font,color:rgb(.25,.31,.36)});
+  }
+ });
+ return new Blob([await finalDoc.save()],{type:"application/pdf"});
+}
+
+function deliveryRevisionLabel(n){return "R"+String(Math.max(0,n)).padStart(2,"0");}
+function updateDeliveryStatus(){let n=(state.meta?.lastFinalizedRevision??-1)+1;let a=document.getElementById("deliveryRevision");if(a)a.textContent=deliveryRevisionLabel(n);let b=document.getElementById("deliveryLast");if(b)b.textContent=(state.meta?.lastFinalizedRevision??-1)>=0?deliveryRevisionLabel(state.meta.lastFinalizedRevision)+" • "+new Date(state.meta.lastFinalizedAt).toLocaleString("pt-BR"):"Ainda não finalizada";}
+function canonicalDeliveryData(){let c=JSON.parse(JSON.stringify(state));if(c.meta){delete c.meta.updated;delete c.meta.lastFinalizedRevision;delete c.meta.lastFinalizedHash;delete c.meta.lastFinalizedAt;}return c;}
+async function sha256Text(t){let b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+async function finalizeDelivery(){
+ try{
+  if(!window.JSZip)throw new Error("Módulo ZIP não carregado.");
+  updateReview();let sts=tabStatuses(),tabs=["inicio","local","carac","met","amos","resultado","diag","docs"];
+  if(!PROTOTYPE_NO_REQUIRED && !tabs.every(k=>sts[k]==="complete"))throw new Error("Conclua as pendências antes da finalização.");
+  const keys=["matricula","fotoAvaliando","fotoAmostras","sisdea","mapa","art","vli","complementar"];
+  if(keys.some(k=>state.docs?.[k+"Status"]==="Anexado"&&!docPdfFiles[k]))throw new Error("Há anexo marcado como Anexado sem PDF selecionado.");
+  const labels={matricula:"Matrícula",fotoAvaliando:"Relatório fotográfico do avaliando",fotoAmostras:"Relatório fotográfico das amostras",sisdea:"Relatório estatístico SISDEA",mapa:"Mapa de localização das amostras",art:"ART/RRT",vli:"Memória / planilha de cálculo do VLI",complementar:"Documentação complementar"};
+  const extras=keys.filter(k=>docPdfFiles[k]).map(k=>({file:docPdfFiles[k],label:labels[k]}));
+  let pdf=await consolidatePdf(buildCompleteReportPdf(),extras);
+  let canonical=JSON.stringify(canonicalDeliveryData()),hash=await sha256Text(canonical),last=state.meta?.lastFinalizedRevision??-1,rev=last+1;
+  if(last>=0&&hash===state.meta.lastFinalizedHash){if(!confirm(`Nenhuma alteração foi identificada desde ${deliveryRevisionLabel(last)}.\n\nGerar novamente a mesma versão?`))return;rev=last;}
+  else if(!confirm(last<0?`Finalizar a primeira versão como ${deliveryRevisionLabel(rev)}?`:`Foram identificadas alterações. Finalizar como ${deliveryRevisionLabel(rev)}?`))return;
+  let at=new Date().toISOString(),num=String(state.inicio?.numeroLaudo||"avaliacao").replace(/[^\w-]+/g,"_"),rl=deliveryRevisionLabel(rev);
+  let payload={
+   schema_version:"1.0",
+   app_version:APP_VERSION,
+   identificador_principal:"numero_laudo",
+   numero_laudo:state.inicio?.numeroLaudo||"",
+   avaliacao_id:state.meta.evaluationId,
+   numero_os:state.inicio?.os||"",
+   revisao:rl,
+   data_finalizacao:at,
+   dados:canonicalDeliveryData()
+  };
+  let zip=new JSZip();zip.file(`Laudo_${num}_${rl}.pdf`,pdf);zip.file(`Laudo_${num}_${rl}.json`,JSON.stringify(payload,null,2));
+  let z=await zip.generateAsync({type:"blob"}),x=document.createElement("a");x.href=URL.createObjectURL(z);x.download=`Laudo_${num}_${rl}.zip`;x.click();setTimeout(()=>URL.revokeObjectURL(x.href),1000);
+  state.meta.lastFinalizedRevision=rev;state.meta.lastFinalizedHash=hash;state.meta.lastFinalizedAt=at;state.meta.updated=at;updateDeliveryStatus();
+  alert(`Versão ${rl} finalizada. O ZIP contém PDF + JSON. Salve também o arquivo de trabalho para preservar o histórico.`);
+ }catch(e){alert("Não foi possível finalizar.\n\n"+(e?.message||e));}
+}
+
+function commitResultStateBeforePdf(){
+ try{
+   const method=String(document.getElementById("metodoAvaliacaoUniversal")?.value||state.metodologia?.metodoAvaliacao||"");
+   if(method.startsWith("MEVOL")){
+     const adopted=document.getElementById("resEvAdotado");
+     const market=document.getElementById("resEvMercado");
+     state.resultadoEvolutivo=state.resultadoEvolutivo||{};
+     if(adopted)state.resultadoEvolutivo.valorAdotado=String(adopted.value||"").trim();
+     if(market)state.resultadoEvolutivo.valorMercado=String(market.value||adopted?.value||"").trim();
+   }else{
+     state.resultado=state.resultado||{};
+     const adopted=document.getElementById("resMcAdotado");
+     const market=document.querySelector('[data-form="resultado"][data-key="valorMercado"]');
+     const adoptedValue=String(adopted?.value||state.resultado.vm||state.resultado.valorArredondado||"").trim();
+     state.resultado.vm=adoptedValue;
+     state.resultado.valorMercado=adoptedValue;
+     if(market)market.value=adoptedValue;
+     ["vliMax","vliMin","prazoMin","prazoMax","valorLocacao","valorMaxLocacao"].forEach(k=>{
+       const e=document.querySelector(`[data-form="resultado"][data-key="${k}"]`);
+       if(e)state.resultado[k]=String(e.value||"").trim();
+     });
+   }
+ }catch(e){}
+}
+async function generateCompleteReport(){
+ const pdfBtn=document.querySelector("#emitPdfTop");
+ const oldBtnText=pdfBtn?.textContent;
+ try{
+   if(pdfBtn){pdfBtn.disabled=true;pdfBtn.textContent="Gerando PDF...";}
+   pdfBusy(true,"Preparando o laudo...");
+   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+   updateReview();
+   const sts=tabStatuses();
+   const requiredTabs=["inicio","local","carac","met","amos","resultado","diag","docs"];
+   const canPdf=PROTOTYPE_NO_REQUIRED ? true : requiredTabs.every(k=>sts[k]==="complete");
+   if(!canPdf){alert("A geração do PDF está bloqueada. Conclua as pendências indicadas antes da emissão.");return;}
+   const orderedDocKeys=["matricula","fotoAvaliando","fotoAmostras","sisdea","mapa","art","vli","complementar"];
+   const missing=orderedDocKeys.filter(k=>state.docs?.[k+"Status"]==="Anexado"&&!docPdfFiles[k]);
+   if(missing.length){alert("Há anexos marcados como Anexado sem arquivo PDF selecionado. Inclua os arquivos antes da emissão.");return;}
+   const docLabels={matricula:"Matrícula",fotoAvaliando:"Relatório fotográfico do avaliando",fotoAmostras:"Relatório fotográfico das amostras",sisdea:"Relatório estatístico SISDEA",mapa:"Mapa de localização das amostras",art:"ART/RRT",vli:"Memória / planilha de cálculo do VLI",complementar:"Documentação complementar"};
+   const selected=orderedDocKeys.filter(k=>docPdfFiles[k]).map(k=>({file:docPdfFiles[k],label:docLabels[k]}));
+   pdfBusyStep("Preparando laudo...");
+   commitResultStateBeforePdf();
+   let blob=buildCompleteReportPdf();
+   pdfBusyStep("Gerando mapas e consolidando anexos...");
+   blob=await consolidatePdf(blob,selected);
+   pdfBusyStep("Finalizando PDF...");
+   await new Promise(r=>requestAnimationFrame(r));
+   let a=document.createElement("a"),laudo=String(state.inicio?.numeroLaudo||"avaliacao").replace(/[^\w-]+/g,"_");
+   a.href=URL.createObjectURL(blob);a.download=`Laudo_${laudo}.pdf`;a.click();
+   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ }catch(err){
+   alert("Não foi possível gerar o PDF consolidado.\n\n"+(err?.message||err));
+ }finally{
+   pdfBusy(false);
+   if(pdfBtn){pdfBtn.disabled=false;pdfBtn.textContent=oldBtnText||"GERAR PDF";}
+ }
+}
+
+document.querySelector("#saveFullTop").onclick=saveEvaluation;
+
+document.querySelector("#fileFullTop").onchange=e=>loadEvaluationFile(e.target.files[0]);
+document.querySelector("#emitPdfTop").onclick=generateCompleteReport;
+renderVars();renderSamples();renderAnnex();updateMethodGate();bindForms();bindDocAttachmentStatus();updateTabStatus();
+updateTabStatus();
+
+document.getElementById("homeNew")?.addEventListener("click",()=>{
+ resetSessionForEvaluation();
+ document.getElementById("homeScreen").style.display="none";
+});
+document.getElementById("homeOpen")?.addEventListener("click",()=>{
+ const f=document.getElementById("fileFullTop"); if(f){f.value="";f.click();}
+});
+document.getElementById("goHomeTop")?.addEventListener("click",()=>{
+ const hasData=(()=>{
+   try{
+     const forms=["inicio","local","carac","galpao","terreno","metodologia","metodados","evolutivo","resultado","resultadoEvolutivo","diag","observacoes","docs","encerramento"];
+     const filled=forms.some(f=>Object.values(state[f]||{}).some(v=>String(v??"").trim()!==""));
+     const vars=(state.vars||[]).some(v=>Object.values(v||{}).some(x=>Array.isArray(x)?x.length:String(x??"").trim()!==""));
+     const samples=(state.samples||[]).some(s=>Object.values(s||{}).some(v=>typeof v==="object"?Object.values(v||{}).some(x=>String(x??"").trim()!==""):String(v??"").trim()!==""));
+     return filled||vars||samples;
+   }catch(e){return true}
+ })();
+ if(hasData && !confirm("Há uma avaliação em andamento.\n\nCertifique-se de salvá-la antes de sair. Deseja voltar à Página Inicial?"))return;
+ document.getElementById("homeScreen").style.display="flex";
+});
+
+
+document.getElementById("finalizeDelivery")?.addEventListener("click",finalizeDelivery);
+document.getElementById("fileFullTop")?.addEventListener("change",()=>setTimeout(()=>{document.getElementById("homeScreen").style.display="none";if(!state.meta)state.meta={};if(!state.meta.evaluationId)state.meta.evaluationId=uid();if(state.meta.lastFinalizedRevision===undefined)state.meta.lastFinalizedRevision=-1;if(state.meta.lastFinalizedHash===undefined)state.meta.lastFinalizedHash="";if(state.meta.lastFinalizedAt===undefined)state.meta.lastFinalizedAt="";updateDeliveryStatus();},150));
+setTimeout(updateDeliveryStatus,0);
+</script>
+<div id="anexoIIHost" class="aii-wrap"></div>
+
+<style>
+#pdfBusyOverlay{position:fixed;inset:0;background:rgba(15,32,48,.42);display:none;align-items:center;justify-content:center;z-index:999999}
+#pdfBusyOverlay.on{display:flex}
+#pdfBusyCard{width:min(430px,calc(100vw - 36px));background:#fff;border-radius:14px;padding:28px 30px;box-shadow:0 18px 55px rgba(0,0,0,.28);text-align:center;font-family:Arial,sans-serif}
+#pdfBusySpinner{width:38px;height:38px;border:4px solid #d9e2e8;border-top-color:#174f7a;border-radius:50%;margin:0 auto 18px;animation:pdfspin .85s linear infinite}
+#pdfBusyTitle{font-size:19px;font-weight:700;color:#174f7a;margin-bottom:8px}
+#pdfBusyStep{font-size:14px;color:#53616d;min-height:20px}
+@keyframes pdfspin{to{transform:rotate(360deg)}}
+</style>
+<div id="pdfBusyOverlay" role="status" aria-live="polite" aria-busy="true">
+ <div id="pdfBusyCard"><div id="pdfBusySpinner"></div><div id="pdfBusyTitle">Gerando PDF...</div><div id="pdfBusyStep">Preparando o laudo...</div></div>
+</div>
+<script>
+function pdfBusy(show,step){
+ const ov=document.getElementById("pdfBusyOverlay"),st=document.getElementById("pdfBusyStep");
+ if(st&&step)st.textContent=step;
+ if(ov)ov.classList.toggle("on",!!show);
+}
+function pdfBusyStep(step){pdfBusy(true,step)}
+</script>
+
+
+<script>
+(function(){
+ const tipo=document.querySelector('[data-form="inicio"][data-key="tipologia"]');
+ const method=document.getElementById("metodoAvaliacaoUniversal");
+ const terrainMethod=document.getElementById("metodoTerreno");
+
+ const parseBR=v=>{
+   v=String(v??"").trim();
+   if(!v)return 0;
+   if(v.includes(","))v=v.replace(/\./g,"").replace(",",".");
+   return Number(v)||0;
+ };
+ const fmtBR=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+ const fmtField=e=>{if(e&&e.value.trim())e.value=fmtBR(parseBR(e.value));};
+
+ function terrainByMCDDM(){
+   const areaEl=document.querySelector('[data-form="galpao"][data-key="areaTerrenoAdotada"]');
+   const vuEl=document.querySelector('[data-form="metodados"][data-key="vuAdotado"]');
+   const area=parseBR(areaEl?.value);
+   const vu=parseBR(vuEl?.value);
+   return area*vu;
+ }
+ function calcEvolutivo(){
+   const isMCDDM=terrainMethod?.value?.startsWith("MCDDM");
+   const vt=isMCDDM?terrainByMCDDM():0; // MINVO will supply its own result when implemented.
+   const vb=parseBR(document.getElementById("evValorBenfeitorias")?.value);
+   const fc=parseBR(document.getElementById("evFC")?.value);
+   const sub=vt+vb, total=sub*fc;
+   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v};
+   set("evCompTerreno",vt?fmtBR(vt):"");
+   set("evCompBenfeitorias",vb?fmtBR(vb):"");
+   set("evCompFC",fc?String(fc).replace(".",","):"");
+   set("evSubtotal",sub?fmtBR(sub):"");
+   set("evValorImovel",total?fmtBR(total):"");
+ }
+ function updatePrototype(){
+   document.body.classList.toggle("mode-galpao",tipo?.value==="Galpão");
+   const mevol=method?.value?.startsWith("MEVOL");
+   document.getElementById("metodoUniversalMEVOL")?.classList.toggle("hidden",!mevol);
+   const inv=terrainMethod?.value?.indexOf("Involutivo")>=0;
+   document.getElementById("minvoAviso")?.classList.toggle("hidden",!inv);
+
+   const mcddm=document.getElementById("metodoUniversalMCDDM");
+   const mainHost=document.getElementById("mcddmUniversalHost");
+   const terrainAnchor=document.getElementById("mcddmTerrenoAnchor");
+   const title=document.getElementById("mcddmContextTitle");
+   const note=document.getElementById("mcddmContextNote");
+   if(mevol&&!inv){
+     terrainAnchor?.after(mcddm); mcddm?.classList.remove("hidden");
+     if(title)title.textContent="7.1 MCDDM — Determinação do valor do terreno";
+     if(note)note.textContent="MCDDM aplicado à determinação do valor do terreno no Método Evolutivo.";
+   }else if(!mevol){
+     mainHost?.appendChild(mcddm); mcddm?.classList.remove("hidden");
+     if(title)title.textContent="Metodologia — Método Comparativo Direto de Dados de Mercado";
+     if(note)note.textContent="MCDDM utilizado como metodologia principal do imóvel.";
+   }else{
+     mainHost?.appendChild(mcddm); mcddm?.classList.add("hidden");
+   }
+   calcEvolutivo();
+ }
+
+ // R$/m² and other numeric prototype fields: display pt-BR with 2 decimals on blur.
+ ["mcVuCentral","mcLimInf","mcLimSup","mcVuAdotado","evValorBenfeitorias","areaTerrenoAdotada"].forEach(id=>{
+   const e=document.getElementById(id); if(!e)return;
+   e.addEventListener("focus",()=>{if(e.value)e.value=String(parseBR(e.value)).replace(".",",")});
+   e.addEventListener("blur",()=>{fmtField(e);calcEvolutivo()});
+   e.addEventListener("input",calcEvolutivo);
+ });
+ document.getElementById("evFC")?.addEventListener("input",calcEvolutivo);
+
+ // Delegated recalculation survives moving/reusing the MCDDM module in the DOM.
+ document.addEventListener("input",e=>{
+   const k=e.target?.dataset?.key;
+   if(k==="areaTerrenoAdotada" || k==="vuAdotado" || k==="valorBenfeitorias" || k==="fc"){
+     calcEvolutivo();
+   }
+ });
+ document.addEventListener("change",e=>{
+   const k=e.target?.dataset?.key;
+   if(k==="areaTerrenoAdotada" || k==="vuAdotado" || k==="metodoTerreno"){
+     setTimeout(calcEvolutivo,0);
+   }
+ });
+ tipo?.addEventListener("change",updatePrototype);
+ method?.addEventListener("change",updatePrototype);
+ terrainMethod?.addEventListener("change",updatePrototype);
+ function syncResultado(){
+   const mevol=method?.value?.startsWith("MEVOL");
+   document.getElementById("resultadoMCDDM")?.classList.toggle("hidden",!!mevol);
+   document.getElementById("resultadoMEVOL")?.classList.toggle("hidden",!mevol);
+   if(!mevol)return;
+   const cp=(a,b)=>{const x=document.getElementById(a),y=document.getElementById(b);if(y)y.value=x?.value||""};
+   cp("evCompTerreno","resEvTerreno"); cp("evCompBenfeitorias","resEvBenfeitorias"); cp("evCompFC","resEvFC");
+   cp("evSubtotal","resEvSubtotal"); cp("evValorImovel","resEvCalculado");
+   const calc=parseBR(document.getElementById("evValorImovel")?.value), adot=parseBR(document.getElementById("resEvAdotado")?.value);
+   const d=document.getElementById("resEvDiferenca");
+   if(d)d.value=calc&&adot?(((adot/calc)-1)*100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"%":"";
+ }
+ const _calcEvolutivo=calcEvolutivo;
+ calcEvolutivo=function(){_calcEvolutivo();syncResultado();};
+ method?.addEventListener("change",()=>setTimeout(syncResultado,0));
+ ["resEvAdotado","resEvVLI"].forEach(id=>{const e=document.getElementById(id);if(!e)return;
+   e.addEventListener("focus",()=>{if(e.value)e.value=String(parseBR(e.value)).replace(".",",")});
+   e.addEventListener("blur",()=>{fmtField(e);syncResultado()}); e.addEventListener("input",syncResultado);
+ });
+ setTimeout(()=>{calcEvolutivo();["mcVuCentral","mcLimInf","mcLimSup","mcVuAdotado","evValorBenfeitorias","areaTerrenoAdotada","resEvAdotado","resEvVLI"].forEach(id=>fmtField(document.getElementById(id)));updatePrototype();syncResultado()},0);
+})();
+</script>
+
+
+<script>
+(function(){
+ const q=(s)=>document.querySelector(s);
+ const parseBR=v=>{v=String(v??"").trim();if(!v)return 0;if(v.includes(","))v=v.replace(/\./g,"").replace(",",".");return Number(v)||0};
+ const fmt=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+ const roundMarket=v=>{ if(!v)return 0; const step=v>=1000000?10000:v>=100000?1000:v>=10000?100:10; return Math.round(v/step)*step; };
+ function objectiveFlags(){
+   const o=q('[data-form="inicio"][data-key="objetivo"]')?.value||"";
+   return {market:/Valor de Mercado/i.test(o),vli:/VLI/i.test(o),rent:/Locação/i.test(o)};
+ }
+ function showObjectiveFields(){
+   const f=objectiveFlags();
+   document.querySelectorAll('[data-result-field]').forEach(el=>{
+     const k=el.dataset.resultField;
+     const show=(k==="mercado"&&f.market)||(k.startsWith("vli")&&f.vli)||(k.startsWith("prazo")&&f.vli)||(k.startsWith("locacao")&&f.rent);
+     el.style.display=show?"":"none";
+   });
+   document.querySelectorAll('[data-ev-result]').forEach(el=>{
+     const k=el.dataset.evResult;
+     const show=(k==="mercado"&&f.market)||(k.startsWith("vli")&&f.vli)||(k.startsWith("prazo")&&f.vli)||(k.startsWith("locacao")&&f.rent);
+     el.style.display=show?"":"none";
+   });
+ }
+ function syncUnifiedResult(){
+   showObjectiveFields();
+   const mevol=q("#metodoAvaliacaoUniversal")?.value?.startsWith("MEVOL");
+   if(mevol){
+     const calc=parseBR(q("#resEvCalculado")?.value), rounded=roundMarket(calc);
+     if(q("#resEvArredondado"))q("#resEvArredondado").value=rounded?fmt(rounded):"";
+     const adot=q("#resEvAdotado");
+     if(adot && !adot.dataset.userEdited && rounded) adot.value=fmt(rounded);
+     const av=parseBR(adot?.value);
+     if(q("#resEvDiferenca"))q("#resEvDiferenca").value=calc&&av?(((av/calc)-1)*100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"%":"";
+     if(q("#resEvMercado"))q("#resEvMercado").value=av?fmt(av):"";
+   }else{
+     const vu=parseBR(q('[data-form="metodados"][data-key="vuAdotado"]')?.value);
+     const tipologia=String(q('[data-form="inicio"][data-key="tipologia"]')?.value||"");
+     // MCDDM principal: imóveis edificados usam a área construída adotada.
+     // Galpão: "Área total avalianda" da Caracterização.
+     // Apartamento e demais tipologias atuais: "Área adotada na avaliação".
+     // Terreno, quando implementado como tipologia, usará explicitamente a área adotada do terreno.
+     let sourceArea;
+     if(tipologia==="Galpão"){
+       sourceArea=q('[data-form="galpao"][data-key="areaAvalianda"]');
+     }else if(tipologia==="Terreno"){
+       sourceArea=q('[data-form="terreno"][data-key="areaTerrenoAdotada"]') ||
+                  q('[data-form="galpao"][data-key="areaTerrenoAdotada"]');
+     }else{
+       sourceArea=q('[data-form="carac"][data-key="areaAdotada"]');
+     }
+     const area=parseBR(sourceArea?.value);
+     const resultArea=q('[data-form="resultado"][data-key="areaAdotada"]');
+     if(resultArea) resultArea.value=area?fmt(area):"";
+     const calc=vu*area, rounded=roundMarket(calc);
+     if(q("#resMcVU"))q("#resMcVU").value=vu?fmt(vu):"";
+     if(q("#resMcCalculado"))q("#resMcCalculado").value=calc?fmt(calc):"";
+     if(q("#resMcArredondado"))q("#resMcArredondado").value=rounded?fmt(rounded):"";
+     const adot=q("#resMcAdotado");
+     if(adot && !adot.dataset.userEdited && rounded) adot.value=fmt(rounded);
+     const av=parseBR(adot?.value);
+     if(q("#resMcDiferenca"))q("#resMcDiferenca").value=calc&&av?(((av/calc)-1)*100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"%":"";
+     const vm=q('[data-form="resultado"][data-key="valorMercado"]'); if(vm)vm.value=av||"";
+   }
+ }
+ ["resMcAdotado","resEvAdotado"].forEach(id=>{const e=document.getElementById(id);if(e){
+   e.addEventListener("input",()=>{e.dataset.userEdited="1";syncUnifiedResult()});
+   e.addEventListener("blur",()=>{const v=parseBR(e.value);e.value=v?fmt(v):"";syncUnifiedResult()});
+ }});
+ document.addEventListener("input",e=>{const k=e.target?.dataset?.key;if(["vuAdotado","areaAdotada","areaAvalianda","areaConstruida","areaTerrenoAdotada","objetivo","tipologia","valorBenfeitorias","fc"].includes(k))setTimeout(syncUnifiedResult,0)});
+ document.addEventListener("change",e=>{if(e.target?.dataset?.key==="objetivo"||e.target?.id==="metodoAvaliacaoUniversal")setTimeout(syncUnifiedResult,0)});
+ setTimeout(syncUnifiedResult,50);
+})();
+</script>
+
+
+
+
+
+<script>
+/* v18.7.3: final reconciliation after opening/importing an evaluation. */
+(function(){
+ function reconcileAreaResult(){
+   try{
+     if(typeof syncResultado==="function") syncResultado();
+     const ev=new Event("input",{bubbles:true});
+     const tip=document.querySelector('[data-form="inicio"][data-key="tipologia"]');
+     if(tip)tip.dispatchEvent(ev);
+   }catch(e){}
+ }
+ window.addEventListener("load",()=>setTimeout(reconcileAreaResult,150));
+ document.addEventListener("change",e=>{
+   const k=e.target?.dataset?.key;
+   if(["tipologia","areaAvalianda","areaAdotada","areaTerrenoAdotada","vuAdotado"].includes(k))
+     setTimeout(reconcileAreaResult,0);
+ });
+})();
+</script>
+
+
+<script>
+/* v19 — controlador estrutural neutro. */
+(function(){
+ const TIPOS_IMPLEMENTADOS=new Set(["Apartamento","Galpão"]);
+ function setBodyClass(prefix,value){
+   [...document.body.classList].filter(c=>c.startsWith(prefix)).forEach(c=>document.body.classList.remove(c));
+   document.body.classList.add(prefix+value);
+ }
+ function applyCharacterization(){
+   const t=String(state.inicio?.tipologia||"").trim();
+   if(!t)setBodyClass("v19-carac-","none");
+   else if(t==="Apartamento")setBodyClass("v19-carac-","apartamento");
+   else if(t==="Galpão")setBodyClass("v19-carac-","galpao");
+   else setBodyClass("v19-carac-","unsupported");
+   const note=document.querySelector("#caracNeutral .protoNote");
+   if(note && t && !TIPOS_IMPLEMENTADOS.has(t))
+     note.textContent=`A tipologia "${t}" ainda não possui módulo de Caracterização implementado neste protótipo. Nenhuma outra tipologia será usada como padrão.`;
+   else if(note)
+     note.textContent="Selecione o Tipo do imóvel na guia Início para disponibilizar os campos de Caracterização. Nenhuma tipologia é presumida em uma nova avaliação.";
+ }
+ function applyMethodology(){
+   const m=String(state.metodologia?.metodoAvaliacao||"").trim();
+   setBodyClass("v19-method-",m?"selected":"none");
+   const sel=document.getElementById("metodoAvaliacaoUniversal");
+   if(sel && sel.value!==m)sel.value=m;
+   if(!m){
+     const mc=document.getElementById("mcddmUniversalHost");if(mc)mc.style.display="none";
+     const ev=document.getElementById("evolutivoUniversal");if(ev)ev.style.display="none";
+   }else if(typeof updateUniversalMethodUI==="function"){
+     updateUniversalMethodUI();
+   }
+ }
+ function reconcile(){
+   applyCharacterization();applyMethodology();
+   if(typeof syncResultado==="function")syncResultado();
+ }
+ document.addEventListener("change",e=>{
+   const f=e.target?.dataset?.form,k=e.target?.dataset?.key;
+   if(f==="inicio"&&k==="tipologia")setTimeout(reconcile,0);
+   if(f==="metodologia"&&k==="metodoAvaliacao")setTimeout(reconcile,0);
+ });
+ window.addEventListener("load",()=>setTimeout(reconcile,50));
+ document.getElementById("homeNew")?.addEventListener("click",()=>{
+   // New evaluation starts neutral: no implicit tipology/method.
+   state.inicio.tipologia="";
+   state.metodologia.metodoAvaliacao="";
+   const t=document.querySelector('[data-form="inicio"][data-key="tipologia"]');if(t)t.value="";
+   const m=document.getElementById("metodoAvaliacaoUniversal");if(m)m.value="";
+   reconcile();
+ });
+ document.getElementById("fileFullTop")?.addEventListener("change",()=>setTimeout(()=>{try{if(typeof rebuildInterfaceFromLoadedEvaluation==="function")rebuildInterfaceFromLoadedEvaluation();else reconcile()}catch(e){}},260));
+ setTimeout(reconcile,100);
+ window.v19Reconcile=reconcile;
+})();
+</script>
+
+
+<script>
+/* v20.3 — controlador definitivo de exibição da Metodologia */
+(function(){
+ function methodKind(){
+   const m=String(state?.metodologia?.metodoAvaliacao || document.getElementById("metodoAvaliacaoUniversal")?.value || "").trim();
+   if(m.startsWith("MCDDM")) return "MCDDM";
+   if(m.startsWith("MEVOL")) return "MEVOL";
+   return "";
+ }
+ function applyV1901Method(){
+   const kind=methodKind();
+   const neutral=document.getElementById("methodNeutral");
+   const mc=document.getElementById("mcddmUniversalHost");
+   const ev=document.getElementById("evolutivoUniversal");
+   if(neutral) neutral.style.display=kind ? "none" : "block";
+   if(mc) mc.style.display=kind==="MCDDM" ? "block" : "none";
+   if(ev) ev.style.display=kind==="MEVOL" ? "block" : "none";
+   document.body.classList.remove("v19-method-none","v19-method-selected");
+   document.body.classList.add(kind ? "v19-method-selected" : "v19-method-none");
+ }
+ const sel=document.getElementById("metodoAvaliacaoUniversal");
+ if(sel){
+   sel.addEventListener("change",function(){
+     if(!state.metodologia) state.metodologia={};
+     state.metodologia.metodoAvaliacao=this.value;
+     // Allow legacy routine to update internal MEVOL/MCDDM fields, then enforce visibility.
+     try{ if(typeof updateUniversalMethodUI==="function") updateUniversalMethodUI(); }catch(e){}
+     applyV1901Method();
+     setTimeout(applyV1901Method,0);
+   });
+ }
+ window.addEventListener("load",()=>setTimeout(applyV1901Method,120));
+ document.getElementById("fileFullTop")?.addEventListener("change",()=>setTimeout(applyV1901Method,300));
+ document.getElementById("homeNew")?.addEventListener("click",()=>setTimeout(applyV1901Method,30));
+ window.v1901ApplyMethod=applyV1901Method;
+ setTimeout(applyV1901Method,150);
+})();
+</script>
+
+
+<script>
+/* v20.0.3 — normalização visual do Resultado */
+(function(){
+ const q=s=>document.querySelector(s);
+ const parse=v=>{let s=String(v??"").trim().replace(/^R\$\s*/i,"");if(!s)return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");return Number(s);};
+ const fmt=v=>{const n=parse(v);return Number.isFinite(n)?n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"";};
+ function normalize(){
+   try{
+     if(typeof syncUnifiedResult==="function")syncUnifiedResult();
+     const mevol=String(q("#metodoAvaliacaoUniversal")?.value||"").startsWith("MEVOL");
+     const ids=mevol?["resEvTerreno","resEvBenfeitorias","resEvAntesFc","resEvCalculado","resEvArredondado","resEvAdotado","resEvMercado"]:["resMcVU","resMcCalculado","resMcArredondado","resMcAdotado"];
+     ids.forEach(id=>{const e=document.getElementById(id);if(e&&String(e.value||"").trim())e.value=fmt(e.value);});
+     if(!mevol){
+       const adot=q("#resMcAdotado"),merc=q('[data-form="resultado"][data-key="valorMercado"]');
+       if(adot&&String(adot.value||"").trim()){state.resultado.vm=adot.value;state.resultado.valorMercado=adot.value;if(merc)merc.value=fmt(adot.value);}
+     }
+   }catch(e){}
+ }
+ document.querySelectorAll('.tabbtn[data-tab="resultado"]').forEach(b=>b.addEventListener("click",()=>setTimeout(normalize,0)));
+ window.addEventListener("load",()=>setTimeout(normalize,200));
+})();
+</script>
+
+
+<script>
+/* v20.0.4 — fonte única do Resultado MCDDM + máscara monetária */
+(function(){
+ const q=s=>document.querySelector(s);
+ const parse=v=>{let s=String(v??"").trim().replace(/^R\$\s*/i,"");if(!s)return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");return Number(s);};
+ const fmt=v=>{const n=parse(v);return Number.isFinite(n)?n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"";};
+ function normalizeMCDDM(){
+   const method=String(q("#metodoAvaliacaoUniversal")?.value||state.metodologia?.metodoAvaliacao||"");
+   if(method.startsWith("MEVOL"))return;
+   if(typeof syncUnifiedResult==="function")syncUnifiedResult();
+   const adopted=q("#resMcAdotado");
+   if(adopted&&String(adopted.value||"").trim())adopted.value=fmt(adopted.value);
+   const adoptedValue=String(adopted?.value||state.resultado?.vm||state.resultado?.valorArredondado||"").trim();
+   state.resultado=state.resultado||{};
+   if(adoptedValue){state.resultado.vm=adoptedValue;state.resultado.valorMercado=adoptedValue;}
+   const market=q('[data-form="resultado"][data-key="valorMercado"]');
+   if(market){market.value=adoptedValue?fmt(adoptedValue):"";}
+   ["vliMax","vliMin","valorLocacao","valorMaxLocacao"].forEach(k=>{
+     const e=q(`[data-form="resultado"][data-key="${k}"]`);
+     if(e&&String(e.value||"").trim()){e.value=fmt(e.value);state.resultado[k]=e.value;}
+   });
+ }
+ document.querySelectorAll('.tabbtn[data-tab="resultado"]').forEach(b=>b.addEventListener("click",()=>setTimeout(normalizeMCDDM,10)));
+ ["vliMax","vliMin","valorLocacao","valorMaxLocacao"].forEach(k=>{
+   const e=q(`[data-form="resultado"][data-key="${k}"]`);
+   if(e)e.addEventListener("blur",normalizeMCDDM);
+ });
+ window.addEventListener("load",()=>setTimeout(normalizeMCDDM,250));
+ document.getElementById("fileFullTop")?.addEventListener("change",()=>setTimeout(normalizeMCDDM,450));
+ window.v1904NormalizeMCDDM=normalizeMCDDM;
+})();
+</script>
+
+
+<style id="binaryChoiceTestStyle">
+.binary-choice-wrap{display:inline-flex;gap:4px;align-items:center;vertical-align:middle}
+.binary-choice-wrap select.binary-choice-source{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+.binary-choice-btn{min-width:42px;height:28px;padding:2px 9px;border:1px solid #8fa9bd;border-radius:5px;background:#fff;color:#173f63;font:inherit;font-size:13px;font-weight:600;cursor:pointer;line-height:1}
+.binary-choice-btn:hover{background:#eef5fa}
+.binary-choice-btn.active{background:#245b89;color:#fff;border-color:#245b89}
+.binary-choice-btn:focus-visible{outline:2px solid #245b89;outline-offset:1px}
+
+.restriction-item{display:grid;grid-template-columns:minmax(220px,2fr) minmax(170px,1fr) auto;gap:10px;align-items:end;margin:7px 0;padding:9px;border:1px solid #d7e0e7;border-radius:6px;background:#fafcfd}
+.restriction-item button{height:34px}
+@media(max-width:760px){.restriction-item{grid-template-columns:1fr}}
+</style>
+<script>
+/* Web2 UI test: replace only exact Sim/Não(/NI) selects by compact buttons.
+   The original select remains the data/state/PDF source of truth. */
+(function(){
+ function norm(s){return String(s||"").trim().toLowerCase()
+   .normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+ function eligible(sel){
+   if(!sel || sel.dataset.binaryEnhanced==="1" || sel.multiple)return false;
+   const vals=[...sel.options].map(o=>norm(o.value||o.textContent)).filter(Boolean);
+   const allowed=new Set(["sim","nao","ni"]);
+   return vals.length>=2 && vals.every(v=>allowed.has(v)) && vals.includes("sim") && vals.includes("nao");
+ }
+ function enhance(sel){
+   if(!eligible(sel))return;
+   sel.dataset.binaryEnhanced="1";
+   sel.classList.add("binary-choice-source");
+   const wrap=document.createElement("span");
+   wrap.className="binary-choice-wrap";
+   sel.parentNode.insertBefore(wrap,sel);
+   wrap.appendChild(sel);
+   const sync=()=>{
+     const f=sel.dataset.form,k=sel.dataset.key;
+     const sv=(f&&k&&window.state?.[f]&&Object.prototype.hasOwnProperty.call(window.state[f],k))?window.state[f][k]:sel.value;
+     if(String(sel.value)!==String(sv??""))sel.value=sv??"";
+     [...wrap.querySelectorAll(".binary-choice-btn")].forEach(b=>{
+       const on=norm(b.dataset.value)===norm(sv);
+       b.classList.toggle("active",on);
+       b.setAttribute("aria-pressed",on?"true":"false");
+     });
+   };
+   [...sel.options].filter(o=>norm(o.value||o.textContent)).forEach(o=>{
+     const b=document.createElement("button");
+     b.type="button"; b.className="binary-choice-btn";
+     b.textContent=(o.textContent||o.value).trim();
+     b.dataset.value=o.value;
+     b.setAttribute("aria-pressed","false");
+     b.addEventListener("click",()=>{
+       sel.value=o.value;
+       sel.dispatchEvent(new Event("change",{bubbles:true}));
+       sel.dispatchEvent(new Event("input",{bubbles:true}));
+       sync();
+     });
+     wrap.appendChild(b);
+   });
+   sel.addEventListener("change",sync);
+   sync();
+ }
+ function scan(root=document){root.querySelectorAll("select").forEach(enhance);}
+ window.web2EnhanceBinaryChoices=scan;
+ window.syncBinaryChoices=()=>{
+   scan();
+   document.querySelectorAll("select.binary-choice-source").forEach(sel=>sel.dispatchEvent(new Event("change",{bubbles:false})));
+ };
+ window.addEventListener("load",()=>setTimeout(()=>{scan();window.syncBinaryChoices?.()},250));
+ window.addEventListener("load",()=>setTimeout(()=>{try{initRestricoesTerreno();applyFinalidadeRules()}catch(e){}},280));
+ document.addEventListener("click",()=>setTimeout(()=>scan(),0),true);
+ const mo=new MutationObserver(()=>scan());
+ window.addEventListener("load",()=>mo.observe(document.body,{childList:true,subtree:true}));
+})();
+</script>
+
+</body></html>
